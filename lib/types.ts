@@ -72,3 +72,62 @@ export interface SessionAnswer {
   question: string;
   fragment: Fragment;
 }
+
+// Life skeleton: a rough scaffold gathered during a dedicated intake step
+// before deep-probing questions begin, so the question engine (and tagging)
+// has standing context to place new fragments against instead of guessing
+// blind. Fuzzy/approximate dates are expected and fine here - precision
+// comes later via the normal review process.
+
+export interface SkeletonLocation {
+  id: string;
+  place: string;
+  approxStart?: string;
+  approxEnd?: string;
+}
+
+export interface SkeletonRelationship {
+  id: string;
+  name: string;
+  /** Free text, e.g. "spouse", "long-term partner" - not a fixed enum. */
+  type: string;
+  approxStart?: string;
+  approxEnd?: string;
+  notes?: string;
+}
+
+export interface SkeletonTransition {
+  id: string;
+  description: string;
+  approxDate?: string;
+}
+
+export interface LifeSkeleton {
+  birthDate?: string;
+  birthPlace?: string;
+  locations: SkeletonLocation[];
+  relationships: SkeletonRelationship[];
+  transitions: SkeletonTransition[];
+  /** Set once the intake step is considered done; gates entry to normal daily questions. */
+  completedAt?: string;
+}
+
+export function emptySkeleton(): LifeSkeleton {
+  return { locations: [], relationships: [], transitions: [] };
+}
+
+export type IntakeCategory = "birth" | "locations" | "relationships" | "transitions";
+
+export const INTAKE_CATEGORY_ORDER: IntakeCategory[] = [
+  "birth",
+  "locations",
+  "relationships",
+  "transitions",
+];
+
+export const INTAKE_CATEGORY_LABELS: Record<IntakeCategory, string> = {
+  birth: "Birth date and birthplace",
+  locations: "Key locations lived",
+  relationships: "Key relationships",
+  transitions: "Major life transitions",
+};

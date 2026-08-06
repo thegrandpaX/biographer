@@ -1,6 +1,16 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { THEME_LABELS, type CoverageMap, type Fragment, type LifePeriod, type ThemeKey } from "./types";
+import {
+  INTAKE_CATEGORY_LABELS,
+  THEME_LABELS,
+  type CoverageMap,
+  type Fragment,
+  type IntakeCategory,
+  type LifePeriod,
+  type LifeSkeleton,
+  type ThemeKey,
+} from "./types";
 import { pickNextTarget } from "./coverage";
+import { summarizeSkeleton, type SkeletonFacts } from "./skeleton";
 
 const MODEL = "claude-sonnet-5";
 
@@ -33,7 +43,8 @@ export interface GeneratedQuestion {
  */
 export async function generateQuestion(
   coverageMap: CoverageMap,
-  recentFragments: Fragment[]
+  recentFragments: Fragment[],
+  skeleton: LifeSkeleton
 ): Promise<GeneratedQuestion> {
   const target = pickNextTarget(coverageMap);
   if (!target) {
@@ -58,13 +69,16 @@ export async function generateQuestion(
       "job is to ask ONE good, specific, open-ended question that draws out real detail " +
       "in that area. Draw on categories like: " + PROBING_CATEGORIES.join(", ") + ". " +
       "Nothing is taboo - heavy or sensitive territory is high-value, not to be avoided. " +
-      "If relevant, you may reference a past fragment to draw a connection, but the " +
-      "question must still center on the target period/theme. Return ONLY the question " +
-      "text, no preamble, no quotation marks.",
+      "You have standing background context (the life skeleton) - use it to ask sharper, " +
+      "better-anchored questions (e.g. referencing a known relationship or place by name) " +
+      "rather than generic ones. If relevant, you may reference a past fragment to draw a " +
+      "connection, but the question must still center on the target period/theme. Return " +
+      "ONLY the question text, no preamble, no quotation marks.",
     messages: [
       {
         role: "user",
         content:
+          `Life skeleton (standing context):\n${summarizeSkeleton(skeleton)}\n\n` +
           `Target life period: ${period?.label ?? target.periodId}\n` +
           `Target theme: ${themeLabel}\n\n` +
           (recentContext
@@ -134,7 +148,8 @@ const TAG_TOOL: Anthropic.Tool = {
 export async function inferTags(
   cleanedText: string,
   periods: LifePeriod[],
-  hint: { periodId: string; theme: ThemeKey }
+  hint: { periodId: string; theme: ThemeKey },
+  skeleton: LifeSkeleton
 ): Promise<InferredTags> {
   const client = getClient();
   const periodList = periods.map((p) => `- ${p.id}: ${p.label}`).join("\n");
@@ -147,11 +162,15 @@ export async function inferTags(
     system:
       "You tag journal fragments with the life period and theme they actually belong to, " +
       "based on context clues in the text (age, school, job, location mentioned) - not " +
-      "just the question that prompted it, since answers often wander to a different period.",
+      "just the question that prompted it, since answers often wander to a different period. " +
+      "Use the life skeleton as standing context: e.g. if a named person or place is " +
+      "mentioned that the skeleton already places in a specific era, use that to place the " +
+      "fragment confidently instead of guessing from the fragment alone.",
     messages: [
       {
         role: "user",
         content:
+          `Life skeleton (standing context):\n${summarizeSkeleton(skeleton)}\n\n` +
           `Known life periods:\n${periodList}\n\n` +
           `The question asked was aimed at period "${hint.periodId}" / theme "${hint.theme}", ` +
           "but tag based on what the fragment actually describes.\n\n" +
@@ -166,4 +185,113 @@ export async function inferTags(
     return { periodId: input.periodId, theme: input.theme };
   }
   return hint;
+}
+
+/**
+ * Generates the next intake question for the given skeleton category,
+ * informed by what's already captured so it doesn't re-ask for things it
+ * already knows. This runs before normal deep-probing questions begin -
+ * the goal is a rough scaffold (fuzzy dates are fine), not deep detail.
+ */
+export async function generateIntakeQuestion(
+  skeleton: LifeSkeleton,
+  category: IntakeCategory
+): Promise<string> {
+  const client = getClient();
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 300,
+    system:
+      "You are a patient biographer doing a quick intake pass before deep interviewing " +
+      "begins - like getting the basic skeleton of someone's life before probing into " +
+      "detail. Ask ONE light, open question to gather rough, approximate information for " +
+      "the target category below. Fuzzy dates and rough answers are totally fine - do not " +
+      "press for precision. Don't re-ask for anything already captured in the skeleton. " +
+      "Return ONLY the question text, no preamble, no quotation marks.",
+    messages: [
+      {
+        role: "user",
+        content:
+          `Life skeleton captured so far:\n${summarizeSkeleton(skeleton)}\n\n` +
+          `Target category: ${INTAKE_CATEGORY_LABELS[category]}\n\n` +
+          "Ask the next intake question for this category.",
+      },
+    ],
+  });
+  const text = msg.content.find((b) => b.type === "text");
+  return text && text.type === "text" ? text.text.trim() : "Tell me a bit about that.";
+}
+
+const SKELETON_FACTS_TOOL: Anthropic.Tool = {
+  name: "record_skeleton_facts",
+  description:
+    "Record rough life-skeleton facts mentioned in an intake answer. Only include facts " +
+    "actually stated - do not invent anything. Approximate/fuzzy dates are fine (a year, " +
+    "a season, 'early twenties', etc.) - use whatever granularity the person gave.",
+  input_schema: {
+    type: "object",
+    properties: {
+      birthDate: { type: "string", description: "Birth date, as precisely as stated." },
+      birthPlace: { type: "string", description: "Birthplace, as stated." },
+      locations: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            place: { type: "string" },
+            approxStart: { type: "string" },
+            approxEnd: { type: "string" },
+          },
+          required: ["place"],
+        },
+      },
+      relationships: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            type: { type: "string", description: "e.g. spouse, long-term partner" },
+            approxStart: { type: "string" },
+            approxEnd: { type: "string" },
+            notes: { type: "string" },
+          },
+          required: ["name", "type"],
+        },
+      },
+      transitions: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            description: { type: "string" },
+            approxDate: { type: "string" },
+          },
+          required: ["description"],
+        },
+      },
+    },
+  },
+};
+
+/** Extracts life-skeleton facts from a single intake answer via tool use. */
+export async function extractSkeletonFacts(cleanedText: string): Promise<SkeletonFacts> {
+  const client = getClient();
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 500,
+    tools: [SKELETON_FACTS_TOOL],
+    tool_choice: { type: "tool", name: "record_skeleton_facts" },
+    system:
+      "Extract rough life-skeleton facts from this intake answer: birth info, places lived " +
+      "with rough date ranges, key relationships with rough eras, and major life transitions. " +
+      "Only extract what's actually stated. Leave fields out entirely if not mentioned.",
+    messages: [{ role: "user", content: cleanedText }],
+  });
+
+  const toolUse = msg.content.find((b) => b.type === "tool_use");
+  if (toolUse && toolUse.type === "tool_use") {
+    return toolUse.input as SkeletonFacts;
+  }
+  return {};
 }

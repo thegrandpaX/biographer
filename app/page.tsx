@@ -1,10 +1,12 @@
 import { auth, signIn } from "@/lib/auth";
+import { readSkeleton } from "@/lib/drive";
 import SessionScreen from "@/components/SessionScreen";
+import IntakeScreen from "@/components/IntakeScreen";
 
 export default async function Home() {
   const session = await auth();
 
-  if (!session) {
+  if (!session?.accessToken) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6 text-center">
         <div>
@@ -28,6 +30,11 @@ export default async function Home() {
         </form>
       </div>
     );
+  }
+
+  const skeleton = await readSkeleton(session.accessToken);
+  if (!skeleton.completedAt) {
+    return <IntakeScreen initialSkeleton={skeleton} />;
   }
 
   return <SessionScreen />;

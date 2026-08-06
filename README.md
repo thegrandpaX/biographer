@@ -4,11 +4,14 @@ A patient, curious biographer that interviews you a little at a time and, over
 time, weaves the fragments into a life story. See the concept spec (Notion)
 for the full design rationale.
 
-This is the initial scaffold: the daily-question loop (ask → answer by voice
-or text → cleanup → tag → save fragment → update coverage map) is wired
-end-to-end. The review feed and chapters viewer are real routes reading live
-data. The consolidation pass (fragments → narrative chapters) is not built
-yet - the spec marks it "to be detailed further."
+This is the initial scaffold: a one-time intake step gathers a rough life
+skeleton (birth info, key locations, key relationships, major transitions)
+before deep-probing questions begin, so the question engine and tagging have
+standing context instead of guessing blind. After intake, the daily-question
+loop (ask → answer by voice or text → cleanup → tag → save fragment → update
+coverage map) is wired end-to-end. The review feed and chapters viewer are
+real routes reading live data. The consolidation pass (fragments → narrative
+chapters) is not built yet - the spec marks it "to be detailed further."
 
 ## Stack
 
@@ -87,6 +90,9 @@ Everything is stored as JSON files in Drive - no database:
   cleaned text, inferred period/theme tags, source question)
 - `Biographer Data/coverage-map.json` - tracks which (life period, theme)
   combinations are thin vs. well-covered, steering future questions
+- `Biographer Data/skeleton.json` - the rough life skeleton gathered during
+  intake (birth info, locations, relationships, transitions); once
+  `completedAt` is set, the app moves from intake into normal daily questions
 - `Biographer Data/chapters/` - reserved for the consolidation pass (not
   built yet)
 

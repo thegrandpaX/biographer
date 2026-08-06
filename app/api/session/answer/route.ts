@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { auth } from "@/lib/auth";
-import { readCoverageMap, saveFragment, writeCoverageMap } from "@/lib/drive";
+import { readCoverageMap, readSkeleton, saveFragment, writeCoverageMap } from "@/lib/drive";
 import { cleanupTranscript, inferTags } from "@/lib/claude";
 import { recordFragment } from "@/lib/coverage";
 import type { ThemeKey } from "@/lib/types";
@@ -24,13 +24,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "rawText is required" }, { status: 400 });
   }
 
-  const coverageMap = await readCoverageMap(session.accessToken);
+  const [coverageMap, skeleton] = await Promise.all([
+    readCoverageMap(session.accessToken),
+    readSkeleton(session.accessToken),
+  ]);
 
   const cleanedText = await cleanupTranscript(body.rawText);
-  const tags = await inferTags(cleanedText, coverageMap.periods, {
-    periodId: body.targetPeriodId,
-    theme: body.targetTheme,
-  });
+  const tags = await inferTags(
+    cleanedText,
+    coverageMap.periods,
+    { periodId: body.targetPeriodId, theme: body.targetTheme },
+    skeleton
+  );
 
   const fragment = {
     id: randomUUID(),

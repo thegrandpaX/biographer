@@ -1,10 +1,11 @@
 import { google, drive_v3 } from "googleapis";
-import { SEED_LIFE_PERIODS, type CoverageMap, type Fragment } from "./types";
+import { SEED_LIFE_PERIODS, emptySkeleton, type CoverageMap, type Fragment, type LifeSkeleton } from "./types";
 
 const APP_FOLDER_NAME = "Biographer Data";
 const FRAGMENTS_FOLDER_NAME = "fragments";
 const CHAPTERS_FOLDER_NAME = "chapters";
 const COVERAGE_MAP_FILENAME = "coverage-map.json";
+const SKELETON_FILENAME = "skeleton.json";
 
 function getDriveClient(accessToken: string): drive_v3.Drive {
   const auth = new google.auth.OAuth2();
@@ -173,6 +174,22 @@ export async function writeCoverageMap(accessToken: string, map: CoverageMap): P
   const drive = getDriveClient(accessToken);
   const { rootId } = await ensureAppStructure(accessToken);
   await writeJsonFile(drive, rootId, COVERAGE_MAP_FILENAME, { ...map, updatedAt: new Date().toISOString() });
+}
+
+export async function readSkeleton(accessToken: string): Promise<LifeSkeleton> {
+  const drive = getDriveClient(accessToken);
+  const { rootId } = await ensureAppStructure(accessToken);
+  const existing = await readJsonFile<LifeSkeleton>(drive, rootId, SKELETON_FILENAME);
+  if (existing) return existing;
+  const seeded = emptySkeleton();
+  await writeJsonFile(drive, rootId, SKELETON_FILENAME, seeded);
+  return seeded;
+}
+
+export async function writeSkeleton(accessToken: string, skeleton: LifeSkeleton): Promise<void> {
+  const drive = getDriveClient(accessToken);
+  const { rootId } = await ensureAppStructure(accessToken);
+  await writeJsonFile(drive, rootId, SKELETON_FILENAME, skeleton);
 }
 
 export async function listChapterFiles(accessToken: string): Promise<{ id: string; name: string }[]> {
