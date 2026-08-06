@@ -14,7 +14,7 @@ yet - the spec marks it "to be detailed further."
 
 - Next.js (App Router, TypeScript) - deploys to Vercel
 - Claude API (Anthropic) - question generation, tag inference, transcript cleanup
-- Whisper (OpenAI) - speech-to-text for voice answers
+- Gemini API (Google AI Studio) - speech-to-text for voice answers, via native audio understanding
 - Google Drive - storage for fragments, coverage map, and (later) chapters. No database.
 
 ## Setup
@@ -29,9 +29,11 @@ npm install
 
 Create a key at https://console.anthropic.com/settings/keys.
 
-### 3. OpenAI API key (for Whisper)
+### 3. Gemini API key (for speech-to-text)
 
-Create a key at https://platform.openai.com/api-keys.
+Create a key at https://aistudio.google.com/apikey. This is a separate key
+from the OAuth client in the next step - it authenticates API calls, not
+your Drive access.
 
 ### 4. Google Drive setup
 
@@ -62,7 +64,7 @@ cp .env.local.example .env.local
 ```
 
 - `ANTHROPIC_API_KEY`
-- `OPENAI_API_KEY`
+- `GEMINI_API_KEY`
 - `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` - from step 4
 - `AUTH_SECRET` - generate with `openssl rand -base64 32`
 - `NEXTAUTH_URL` - `http://localhost:3000` for local dev

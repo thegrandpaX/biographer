@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { transcribeAudio } from "@/lib/whisper";
+import { transcribeAudio } from "@/lib/transcribe";
 
 export async function POST(request: Request) {
   const session = await auth();
