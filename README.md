@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Biographer
 
-## Getting Started
+A patient, curious biographer that interviews you a little at a time and, over
+time, weaves the fragments into a life story. See the concept spec (Notion)
+for the full design rationale.
 
-First, run the development server:
+This is the initial scaffold: the daily-question loop (ask → answer by voice
+or text → cleanup → tag → save fragment → update coverage map) is wired
+end-to-end. The review feed and chapters viewer are real routes reading live
+data. The consolidation pass (fragments → narrative chapters) is not built
+yet - the spec marks it "to be detailed further."
+
+## Stack
+
+- Next.js (App Router, TypeScript) - deploys to Vercel
+- Claude API (Anthropic) - question generation, tag inference, transcript cleanup
+- Whisper (OpenAI) - speech-to-text for voice answers
+- Google Drive - storage for fragments, coverage map, and (later) chapters. No database.
+
+## Setup
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Anthropic API key
+
+Create a key at https://console.anthropic.com/settings/keys.
+
+### 3. OpenAI API key (for Whisper)
+
+Create a key at https://platform.openai.com/api-keys.
+
+### 4. Google Drive setup
+
+The app needs a Google OAuth client so it can create a "Biographer Data"
+folder in your Drive and read/write fragment files there. It only requests
+the `drive.file` scope, meaning it can only see files it creates itself - not
+your whole Drive.
+
+1. Go to https://console.cloud.google.com/ and create a new project (or reuse one).
+2. Go to **APIs & Services > Library**, search for "Google Drive API", and enable it.
+3. Go to **APIs & Services > OAuth consent screen**. Choose **External**, fill in
+   the required fields (app name, your email). You can leave it in "Testing"
+   mode and add your own Google account as a test user - no need to publish
+   or verify it for personal use.
+4. Go to **APIs & Services > Credentials > Create Credentials > OAuth client ID**.
+   - Application type: **Web application**
+   - Authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+     (add your production URL's equivalent once deployed, e.g.
+     `https://yourapp.vercel.app/api/auth/callback/google`)
+5. Copy the generated **Client ID** and **Client Secret**.
+
+### 5. Environment variables
+
+Copy `.env.local.example` to `.env.local` and fill in:
+
+```bash
+cp .env.local.example .env.local
+```
+
+- `ANTHROPIC_API_KEY`
+- `OPENAI_API_KEY`
+- `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` - from step 4
+- `AUTH_SECRET` - generate with `openssl rand -base64 32`
+- `NEXTAUTH_URL` - `http://localhost:3000` for local dev
+
+### 6. Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit http://localhost:3000, sign in with Google, and answer the first
+question. A `Biographer Data` folder will be created in your Drive
+automatically on first sign-in.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Data model
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Everything is stored as JSON files in Drive - no database:
 
-## Learn More
+- `Biographer Data/fragments/{id}.json` - one file per fragment (raw text,
+  cleaned text, inferred period/theme tags, source question)
+- `Biographer Data/coverage-map.json` - tracks which (life period, theme)
+  combinations are thin vs. well-covered, steering future questions
+- `Biographer Data/chapters/` - reserved for the consolidation pass (not
+  built yet)
 
-To learn more about Next.js, take a look at the following resources:
+## Not yet built
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Consolidation pass (fragments -> narrative chapters)
+- Automatic post-session fragment splitting for multi-topic sessions (each
+  answer currently becomes one fragment; the spec's fuller design lets one
+  continuous conversation get split into several fragments after the fact)
+- Timeline correction / review view for blurry dates
+- Capacitor wrap for Android/iOS app-store distribution

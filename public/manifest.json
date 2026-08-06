@@ -1,0 +1,10 @@
+{
+  "name": "Biographer",
+  "short_name": "Biographer",
+  "description": "A patient, curious biographer for your life story.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#171717",
+  "icons": []
+}
