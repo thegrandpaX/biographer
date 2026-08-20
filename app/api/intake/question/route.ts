@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { readSkeleton } from "@/lib/drive";
 import { generateIntakeQuestion } from "@/lib/claude";
+import { isGoogleAuthError } from "@/lib/authErrors";
 import { INTAKE_CATEGORY_ORDER, type IntakeCategory } from "@/lib/types";
 
 export async function GET(request: Request) {
@@ -16,7 +17,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Valid category is required" }, { status: 400 });
   }
 
-  const skeleton = await readSkeleton(session.accessToken);
-  const question = await generateIntakeQuestion(skeleton, category);
-  return NextResponse.json({ question, category });
+  try {
+    const skeleton = await readSkeleton(session.accessToken);
+    const question = await generateIntakeQuestion(skeleton, category);
+    return NextResponse.json({ question, category });
+  } catch (error) {
+    if (isGoogleAuthError(error)) {
+      return NextResponse.json({ error: "Google session expired - please sign in again" }, { status: 401 });
+    }
+    throw error;
+  }
 }

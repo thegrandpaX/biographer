@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { listFragments, updateFragment } from "@/lib/drive";
+import { isGoogleAuthError } from "@/lib/authErrors";
 import type { Fragment } from "@/lib/types";
 
 export async function GET() {
@@ -8,8 +9,15 @@ export async function GET() {
   if (!session?.accessToken) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  const fragments = await listFragments(session.accessToken);
-  return NextResponse.json({ fragments });
+  try {
+    const fragments = await listFragments(session.accessToken);
+    return NextResponse.json({ fragments });
+  } catch (error) {
+    if (isGoogleAuthError(error)) {
+      return NextResponse.json({ error: "Google session expired - please sign in again" }, { status: 401 });
+    }
+    throw error;
+  }
 }
 
 export async function PATCH(request: Request) {
@@ -21,6 +29,13 @@ export async function PATCH(request: Request) {
   if (!fragment.id) {
     return NextResponse.json({ error: "fragment.id is required" }, { status: 400 });
   }
-  await updateFragment(session.accessToken, fragment);
-  return NextResponse.json({ fragment });
+  try {
+    await updateFragment(session.accessToken, fragment);
+    return NextResponse.json({ fragment });
+  } catch (error) {
+    if (isGoogleAuthError(error)) {
+      return NextResponse.json({ error: "Google session expired - please sign in again" }, { status: 401 });
+    }
+    throw error;
+  }
 }

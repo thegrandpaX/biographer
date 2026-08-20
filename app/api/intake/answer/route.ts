@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { readSkeleton, writeSkeleton } from "@/lib/drive";
 import { cleanupTranscript, extractSkeletonFacts } from "@/lib/claude";
 import { mergeSkeletonFacts } from "@/lib/skeleton";
+import { isGoogleAuthError } from "@/lib/authErrors";
 
 interface IntakeAnswerBody {
   rawText: string;
@@ -19,14 +20,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "rawText is required" }, { status: 400 });
   }
 
-  const [skeleton, cleanedText] = await Promise.all([
-    readSkeleton(session.accessToken),
-    cleanupTranscript(body.rawText),
-  ]);
+  try {
+    const [skeleton, cleanedText] = await Promise.all([
+      readSkeleton(session.accessToken),
+      cleanupTranscript(body.rawText),
+    ]);
 
-  const facts = await extractSkeletonFacts(cleanedText);
-  const updatedSkeleton = mergeSkeletonFacts(skeleton, facts);
-  await writeSkeleton(session.accessToken, updatedSkeleton);
+    const facts = await extractSkeletonFacts(cleanedText);
+    const updatedSkeleton = mergeSkeletonFacts(skeleton, facts);
+    await writeSkeleton(session.accessToken, updatedSkeleton);
 
-  return NextResponse.json({ skeleton: updatedSkeleton });
+    return NextResponse.json({ skeleton: updatedSkeleton });
+  } catch (error) {
+    if (isGoogleAuthError(error)) {
+      return NextResponse.json({ error: "Google session expired - please sign in again" }, { status: 401 });
+    }
+    throw error;
+  }
 }

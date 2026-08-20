@@ -1,17 +1,26 @@
 import { auth } from "@/lib/auth";
 import { listChapterFiles } from "@/lib/drive";
+import { isGoogleAuthError } from "@/lib/authErrors";
+
+const SIGN_IN_PROMPT = (
+  <div className="flex flex-1 items-center justify-center p-6 text-neutral-500">
+    Sign in from the Today tab to see your chapters.
+  </div>
+);
 
 export default async function ChaptersPage() {
   const session = await auth();
   if (!session?.accessToken) {
-    return (
-      <div className="flex flex-1 items-center justify-center p-6 text-neutral-500">
-        Sign in from the Today tab to see your chapters.
-      </div>
-    );
+    return SIGN_IN_PROMPT;
   }
 
-  const chapters = await listChapterFiles(session.accessToken);
+  let chapters;
+  try {
+    chapters = await listChapterFiles(session.accessToken);
+  } catch (error) {
+    if (isGoogleAuthError(error)) return SIGN_IN_PROMPT;
+    throw error;
+  }
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
