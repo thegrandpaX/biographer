@@ -9,9 +9,13 @@ skeleton (birth info, key locations, key relationships, major transitions)
 before deep-probing questions begin, so the question engine and tagging have
 standing context instead of guessing blind. After intake, the daily-question
 loop (ask → answer by voice or text → cleanup → tag → save fragment → update
-coverage map) is wired end-to-end. The review feed and chapters viewer are
-real routes reading live data. The consolidation pass (fragments → narrative
-chapters) is not built yet - the spec marks it "to be detailed further."
+coverage map) is wired end-to-end. Scott can also steer the conversation
+himself ("Something else on my mind →") instead of answering the engine's
+question - once he does, the next question follows up on his topic instead
+of snapping back to gap-filling, until he clicks back to regular questions.
+The review feed and chapters viewer are real routes reading live data. The
+consolidation pass (fragments → narrative chapters) is not built yet - the
+spec marks it "to be detailed further."
 
 ## Stack
 

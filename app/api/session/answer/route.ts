@@ -9,9 +9,11 @@ import type { ThemeKey } from "@/lib/types";
 
 interface AnswerBody {
   rawText: string;
-  sourceQuestion: string;
-  targetPeriodId: string;
-  targetTheme: ThemeKey;
+  sourceQuestion?: string;
+  targetPeriodId?: string;
+  targetTheme?: ThemeKey;
+  /** True when Scott started this on his own topic rather than answering the shown question. */
+  selfDirected?: boolean;
 }
 
 export async function POST(request: Request) {
@@ -32,22 +34,24 @@ export async function POST(request: Request) {
     ]);
 
     const cleanedText = await cleanupTranscript(body.rawText);
-    const tags = await inferTags(
-      cleanedText,
-      coverageMap.periods,
-      { periodId: body.targetPeriodId, theme: body.targetTheme },
-      skeleton
-    );
+    // A self-directed entry may arrive with no engine-picked target - fall
+    // back to a neutral hint; inferTags tags from content either way.
+    const hint = {
+      periodId: body.targetPeriodId ?? coverageMap.periods[0]?.id ?? "unknown",
+      theme: body.targetTheme ?? ("daily-life" as ThemeKey),
+    };
+    const tags = await inferTags(cleanedText, coverageMap.periods, hint, skeleton);
 
     const fragment = {
       id: randomUUID(),
       timestamp: new Date().toISOString(),
       periodId: tags.periodId,
       theme: tags.theme,
-      sourceQuestion: body.sourceQuestion,
+      sourceQuestion: body.sourceQuestion ?? "(Scott's own topic - no engine question)",
       rawText: body.rawText,
       cleanedText,
       chapterRefs: [] as string[],
+      selfDirected: body.selfDirected ?? false,
     };
 
     await saveFragment(session.accessToken, fragment);

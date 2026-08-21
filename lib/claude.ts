@@ -96,6 +96,42 @@ export async function generateQuestion(
 }
 
 /**
+ * Generates a natural follow-up on a thread Scott started himself, rather
+ * than gap-filling. Used when the most recent fragment was self-directed -
+ * the biographer follows the thread instead of steering back to whatever
+ * the coverage map thinks is thinnest.
+ */
+export async function generateFollowUpQuestion(
+  lastFragment: Fragment,
+  skeleton: LifeSkeleton
+): Promise<string> {
+  const client = getClient();
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 300,
+    system:
+      "You are a patient, curious biographer. The person just went off on a topic of their " +
+      "own choosing rather than answering a planned question - your job now is to follow " +
+      "that thread, not steer back to something unrelated. Ask ONE natural, curious " +
+      "follow-up that goes deeper into what they just shared (more detail, a related " +
+      "person or moment, how they felt about it). You may draw on the life skeleton for " +
+      "context if it helps sharpen the question. Nothing is taboo. Return ONLY the " +
+      "question text, no preamble, no quotation marks.",
+    messages: [
+      {
+        role: "user",
+        content:
+          `Life skeleton (standing context):\n${summarizeSkeleton(skeleton)}\n\n` +
+          `What they just shared:\n${lastFragment.cleanedText}\n\n` +
+          "Ask a follow-up that stays on this thread.",
+      },
+    ],
+  });
+  const text = msg.content.find((b) => b.type === "text");
+  return text && text.type === "text" ? text.text.trim() : "Tell me more about that.";
+}
+
+/**
  * Removes disfluencies (filler words, false starts, trailing-off) only.
  * Does NOT rewrite phrasing, word choice, or sentence rhythm - the goal is
  * a tidied transcript, not a ghostwritten paraphrase.

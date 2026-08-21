@@ -9,6 +9,7 @@ interface PendingQuestion {
   question: string;
   targetPeriodId: string;
   targetTheme: ThemeKey;
+  followUp: boolean;
 }
 
 export default function SessionScreen() {
@@ -19,12 +20,13 @@ export default function SessionScreen() {
   const [sessionFragments, setSessionFragments] = useState<Fragment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [directedMode, setDirectedMode] = useState(false);
 
-  async function fetchNextQuestion() {
+  async function fetchNextQuestion(forceEngine = false) {
     setLoadingQuestion(true);
     setError(null);
     try {
-      const res = await fetch("/api/session/question");
+      const res = await fetch(`/api/session/question${forceEngine ? "?mode=engine" : ""}`);
       if (!res.ok) throw new Error("Failed to get a question");
       const data = (await res.json()) as PendingQuestion;
       setPending(data);
@@ -44,24 +46,32 @@ export default function SessionScreen() {
   }, []);
 
   async function submitAnswer() {
-    if (!pending || !answer.trim()) return;
+    if (!answer.trim()) return;
+    if (!directedMode && !pending) return;
     setSubmitting(true);
     setError(null);
     try {
       const res = await fetch("/api/session/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rawText: answer,
-          sourceQuestion: pending.question,
-          targetPeriodId: pending.targetPeriodId,
-          targetTheme: pending.targetTheme,
-        }),
+        body: JSON.stringify(
+          directedMode
+            ? { rawText: answer, selfDirected: true }
+            : {
+                rawText: answer,
+                sourceQuestion: pending!.question,
+                targetPeriodId: pending!.targetPeriodId,
+                targetTheme: pending!.targetTheme,
+                // Answering a follow-up continues the same thread.
+                selfDirected: pending!.followUp,
+              }
+        ),
       });
       if (!res.ok) throw new Error("Failed to save answer");
       const data = await res.json();
       setSessionFragments((prev) => [data.fragment as Fragment, ...prev]);
       setAnswer("");
+      setDirectedMode(false);
       await fetchNextQuestion();
     } catch {
       setError("Couldn't save that answer. Your text is still in the box below - try again.");
@@ -88,12 +98,35 @@ export default function SessionScreen() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <QuestionCard question={pending?.question ?? null} loading={loadingQuestion} />
+      {directedMode ? (
+        <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <p className="text-xl leading-relaxed">What&apos;s on your mind?</p>
+          <p className="mt-1 text-sm text-neutral-500">
+            Run with whatever story or memory is on your mind - no need to answer today&apos;s question.
+          </p>
+        </div>
+      ) : (
+        <>
+          <QuestionCard question={pending?.question ?? null} loading={loadingQuestion} />
+          {pending?.followUp && !loadingQuestion && (
+            <p className="-mt-4 text-sm text-neutral-500">
+              Following up on what you shared —{" "}
+              <button onClick={() => fetchNextQuestion(true)} className="underline hover:text-neutral-800 dark:hover:text-neutral-200">
+                back to today&apos;s regular questions
+              </button>
+            </p>
+          )}
+        </>
+      )}
 
       <textarea
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
-        placeholder="Type your answer, or record it below…"
+        placeholder={
+          directedMode
+            ? "Type it out, or record it below…"
+            : "Type your answer, or record it below…"
+        }
         rows={6}
         disabled={loadingQuestion}
         className="w-full rounded-lg border border-neutral-300 p-3 dark:border-neutral-700 dark:bg-neutral-900"
@@ -101,7 +134,23 @@ export default function SessionScreen() {
 
       <div className="flex items-center justify-between">
         <VoiceRecorder onTranscribed={(text) => setAnswer((prev) => (prev ? `${prev} ${text}` : text))} disabled={loadingQuestion} />
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {!directedMode && !loadingQuestion && (
+            <button
+              onClick={() => setDirectedMode(true)}
+              className="rounded-full px-4 py-2 text-sm text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
+            >
+              Something else on my mind →
+            </button>
+          )}
+          {directedMode && (
+            <button
+              onClick={() => setDirectedMode(false)}
+              className="rounded-full px-4 py-2 text-sm text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
+            >
+              ← Back to today&apos;s question
+            </button>
+          )}
           <button
             onClick={() => setDone(true)}
             className="rounded-full px-4 py-2 text-sm text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"

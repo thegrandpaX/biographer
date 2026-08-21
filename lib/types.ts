@@ -51,6 +51,14 @@ export interface Fragment {
   cleanedText: string;
   /** IDs of chapters (in chapters/) that currently reference this fragment. */
   chapterRefs: string[];
+  /**
+   * True when Scott started this fragment on his own topic rather than
+   * answering an engine-picked question (or continued that thread by
+   * answering a follow-up). The question engine uses this to keep
+   * following the thread on the next question instead of snapping back
+   * to gap-filling.
+   */
+  selfDirected?: boolean;
 }
 
 export interface CoverageCell {
