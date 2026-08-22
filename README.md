@@ -21,7 +21,7 @@ spec marks it "to be detailed further."
 
 - Next.js (App Router, TypeScript) - deploys to Vercel
 - Claude API (Anthropic) - question generation, tag inference, transcript cleanup
-- Gemini API (Google AI Studio) - speech-to-text for voice answers, via native audio understanding
+- Browser's built-in Web Speech API - speech-to-text for voice answers, client-side, free, live (no API key or account needed). Works in Chrome/Edge; not supported in Firefox (falls back to typing). Swappable later for a paid provider (e.g. OpenAI Whisper, Deepgram) by replacing `components/VoiceRecorder.tsx` - it's the only place STT logic lives.
 - Google Drive - storage for fragments, coverage map, and (later) chapters. No database.
 
 ## Setup
@@ -36,13 +36,7 @@ npm install
 
 Create a key at https://console.anthropic.com/settings/keys.
 
-### 3. Gemini API key (for speech-to-text)
-
-Create a key at https://aistudio.google.com/apikey. This is a separate key
-from the OAuth client in the next step - it authenticates API calls, not
-your Drive access.
-
-### 4. Google Drive setup
+### 3. Google Drive setup
 
 The app needs a Google OAuth client so it can create a "Biographer Data"
 folder in your Drive and read/write fragment files there. It only requests
@@ -62,7 +56,7 @@ your whole Drive.
      `https://yourapp.vercel.app/api/auth/callback/google`)
 5. Copy the generated **Client ID** and **Client Secret**.
 
-### 5. Environment variables
+### 4. Environment variables
 
 Copy `.env.local.example` to `.env.local` and fill in:
 
@@ -71,12 +65,11 @@ cp .env.local.example .env.local
 ```
 
 - `ANTHROPIC_API_KEY`
-- `GEMINI_API_KEY`
-- `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` - from step 4
+- `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` - from step 3
 - `AUTH_SECRET` - generate with `openssl rand -base64 32`
 - `NEXTAUTH_URL` - `http://localhost:3000` for local dev
 
-### 6. Run
+### 5. Run
 
 ```bash
 npm run dev
