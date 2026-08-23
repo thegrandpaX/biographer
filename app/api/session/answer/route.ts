@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { auth } from "@/lib/auth";
-import { readCoverageMap, readSkeleton, saveFragment, writeCoverageMap } from "@/lib/drive";
-import { cleanupTranscript, inferTags } from "@/lib/claude";
-import { recordFragment } from "@/lib/coverage";
+import { listFragments, readCoverageMap, readSkeleton, saveFragment, writeCoverageMap } from "@/lib/drive";
+import { assessTaper, cleanupTranscript, inferTags } from "@/lib/claude";
+import { markTaperedOff, recordFragment } from "@/lib/coverage";
 import { isGoogleAuthError } from "@/lib/authErrors";
 import type { ThemeKey } from "@/lib/types";
 
@@ -15,6 +15,8 @@ interface AnswerBody {
   /** True when Scott started this on his own topic rather than answering the shown question. */
   selfDirected?: boolean;
 }
+
+const RECENT_SAME_CELL_LIMIT = 3;
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -28,9 +30,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const [coverageMap, skeleton] = await Promise.all([
+    const [coverageMap, skeleton, fragments] = await Promise.all([
       readCoverageMap(session.accessToken),
       readSkeleton(session.accessToken),
+      listFragments(session.accessToken),
     ]);
 
     const cleanedText = await cleanupTranscript(body.rawText);
@@ -56,7 +59,15 @@ export async function POST(request: Request) {
 
     await saveFragment(session.accessToken, fragment);
 
-    const updatedMap = recordFragment(coverageMap, tags.periodId, tags.theme);
+    const sameCellFragments = fragments
+      .filter((f) => f.periodId === tags.periodId && f.theme === tags.theme)
+      .slice(0, RECENT_SAME_CELL_LIMIT);
+    const tapered = await assessTaper(cleanedText, sameCellFragments);
+
+    let updatedMap = recordFragment(coverageMap, tags.periodId, tags.theme);
+    if (tapered) {
+      updatedMap = markTaperedOff(updatedMap, tags.periodId, tags.theme);
+    }
     await writeCoverageMap(session.accessToken, updatedMap);
 
     return NextResponse.json({ fragment });

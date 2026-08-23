@@ -223,6 +223,71 @@ export async function inferTags(
   return hint;
 }
 
+const TAPER_TOOL: Anthropic.Tool = {
+  name: "assess_taper",
+  description:
+    "Assess whether the person has tapped out on this life-period/theme combination - either " +
+    "explicitly saying so, or implicitly by circling the same ground already covered.",
+  input_schema: {
+    type: "object",
+    properties: {
+      taperedOff: {
+        type: "boolean",
+        description:
+          "True only if the person explicitly signals they're done with this topic, or their " +
+          "new answer is substantially just repeating the prior answers with no real new detail.",
+      },
+    },
+    required: ["taperedOff"],
+  },
+};
+
+/**
+ * Judges whether a fragment signals the person is tapped out on this
+ * (period, theme) cell - explicitly ("that's about it, not much happened
+ * there") or implicitly (circling the same ground as recent answers on
+ * this same cell, no new detail). Distinguishing "thin because unasked"
+ * from "thin because there's just not much there" is what lets the
+ * question engine back off instead of getting stuck probing a cell that's
+ * genuinely exhausted.
+ */
+export async function assessTaper(cleanedText: string, priorFragmentsForCell: Fragment[]): Promise<boolean> {
+  // Nothing to compare against yet - never taper on the first fragment in a cell.
+  if (priorFragmentsForCell.length === 0) return false;
+
+  const client = getClient();
+  const priorContext = priorFragmentsForCell.map((f) => `- ${f.cleanedText}`).join("\n");
+
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 200,
+    tools: [TAPER_TOOL],
+    tool_choice: { type: "tool", name: "assess_taper" },
+    system:
+      "You judge whether someone is tapped out on a topic they've been asked about repeatedly. " +
+      "Genuinely new detail, a new angle, or a new sub-story on the same general subject is NOT " +
+      "tapered - people can have a lot to say about one thing. Only call it tapered when the new " +
+      "answer adds essentially nothing beyond what's already captured, or the person says " +
+      "something like 'that's about it' / 'not much else happened there' / 'I've told you " +
+      "everything I remember'. Default to false when in doubt - false is the safe default, since " +
+      "over-probing beats wrongly cutting someone off.",
+    messages: [
+      {
+        role: "user",
+        content:
+          `Prior answers already captured for this period/theme (most recent first):\n${priorContext}\n\n` +
+          `New answer:\n${cleanedText}`,
+      },
+    ],
+  });
+
+  const toolUse = msg.content.find((b) => b.type === "tool_use");
+  if (toolUse && toolUse.type === "tool_use") {
+    return Boolean((toolUse.input as { taperedOff: boolean }).taperedOff);
+  }
+  return false;
+}
+
 /**
  * Generates the next intake question for the given skeleton category,
  * informed by what's already captured so it doesn't re-ask for things it
