@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { auth } from "@/lib/auth";
-import { listFragments, readCoverageMap, readSkeleton, saveFragment, writeCoverageMap } from "@/lib/drive";
+import {
+  listFragments,
+  readCoverageMap,
+  readSavedQuestions,
+  readSkeleton,
+  saveFragment,
+  writeCoverageMap,
+  writeSavedQuestions,
+} from "@/lib/drive";
 import { assessTaper, cleanupTranscript, inferTags } from "@/lib/claude";
 import { markTaperedOff, recordFragment } from "@/lib/coverage";
 import { isGoogleAuthError } from "@/lib/authErrors";
@@ -14,6 +22,8 @@ interface AnswerBody {
   targetTheme?: ThemeKey;
   /** True when Scott started this on his own topic rather than answering the shown question. */
   selfDirected?: boolean;
+  /** If this answers a previously-saved question, its id - cleared from the saved queue on success. */
+  savedQuestionId?: string;
 }
 
 const RECENT_SAME_CELL_LIMIT = 3;
@@ -69,6 +79,14 @@ export async function POST(request: Request) {
       updatedMap = markTaperedOff(updatedMap, tags.periodId, tags.theme);
     }
     await writeCoverageMap(session.accessToken, updatedMap);
+
+    if (body.savedQuestionId) {
+      const savedQuestions = await readSavedQuestions(session.accessToken);
+      await writeSavedQuestions(
+        session.accessToken,
+        savedQuestions.filter((q) => q.id !== body.savedQuestionId)
+      );
+    }
 
     return NextResponse.json({ fragment });
   } catch (error) {

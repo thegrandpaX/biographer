@@ -93,6 +93,8 @@ Everything is stored as JSON files in Drive - no database:
 - `Biographer Data/skeleton.json` - the rough life skeleton gathered during
   intake (birth info, locations, relationships, transitions); once
   `completedAt` is set, the app moves from intake into normal daily questions
+- `Biographer Data/saved-questions.json` - questions Scott set aside to
+  answer later instead of now, surfaced only when he chooses to pull one up
 - `Biographer Data/chapters/` - reserved for the consolidation pass (not
   built yet)
 

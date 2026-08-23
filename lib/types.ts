@@ -61,6 +61,21 @@ export interface Fragment {
   selfDirected?: boolean;
 }
 
+/**
+ * A question set aside to answer later instead of now - e.g. it's clearly
+ * relevant but too deep or long for the current session. Surfaced only
+ * when Scott chooses to pull one up, not force-injected into the normal
+ * question rotation.
+ */
+export interface SavedQuestion {
+  id: string;
+  question: string;
+  targetPeriodId: string;
+  targetTheme: ThemeKey;
+  followUp: boolean;
+  savedAt: string; // ISO 8601
+}
+
 export interface CoverageCell {
   periodId: string;
   theme: ThemeKey;
