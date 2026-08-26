@@ -59,6 +59,8 @@ export interface Fragment {
    * to gap-filling.
    */
   selfDirected?: boolean;
+  /** Drive file IDs of photos attached to this fragment. */
+  photoIds?: string[];
 }
 
 /**

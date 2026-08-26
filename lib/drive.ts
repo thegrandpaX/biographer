@@ -1,4 +1,5 @@
 import { google, drive_v3 } from "googleapis";
+import { Readable } from "node:stream";
 import {
   SEED_LIFE_PERIODS,
   emptySkeleton,
@@ -11,6 +12,7 @@ import {
 const APP_FOLDER_NAME = "Biographer Data";
 const FRAGMENTS_FOLDER_NAME = "fragments";
 const CHAPTERS_FOLDER_NAME = "chapters";
+const PHOTOS_FOLDER_NAME = "photos";
 const COVERAGE_MAP_FILENAME = "coverage-map.json";
 const SKELETON_FILENAME = "skeleton.json";
 const SAVED_QUESTIONS_FILENAME = "saved-questions.json";
@@ -66,6 +68,7 @@ export interface AppFolders {
   rootId: string;
   fragmentsId: string;
   chaptersId: string;
+  photosId: string;
 }
 
 /** Finds or creates the "Biographer Data" folder structure in the user's Drive. */
@@ -74,7 +77,8 @@ export async function ensureAppStructure(accessToken: string): Promise<AppFolder
   const rootId = await getOrCreateFolder(drive, APP_FOLDER_NAME);
   const fragmentsId = await getOrCreateFolder(drive, FRAGMENTS_FOLDER_NAME, rootId);
   const chaptersId = await getOrCreateFolder(drive, CHAPTERS_FOLDER_NAME, rootId);
-  return { rootId, fragmentsId, chaptersId };
+  const photosId = await getOrCreateFolder(drive, PHOTOS_FOLDER_NAME, rootId);
+  return { rootId, fragmentsId, chaptersId, photosId };
 }
 
 async function findFile(
@@ -211,6 +215,30 @@ export async function writeSavedQuestions(accessToken: string, saved: SavedQuest
   const drive = getDriveClient(accessToken);
   const { rootId } = await ensureAppStructure(accessToken);
   await writeJsonFile(drive, rootId, SAVED_QUESTIONS_FILENAME, saved);
+}
+
+export async function uploadPhoto(
+  accessToken: string,
+  filename: string,
+  mimeType: string,
+  data: Buffer
+): Promise<{ id: string; name: string }> {
+  const drive = getDriveClient(accessToken);
+  const { photosId } = await ensureAppStructure(accessToken);
+  const res = await drive.files.create({
+    requestBody: { name: filename, parents: [photosId] },
+    media: { mimeType, body: Readable.from(data) },
+    fields: "id, name",
+  });
+  if (!res.data.id) throw new Error("Failed to upload photo");
+  return { id: res.data.id, name: res.data.name ?? filename };
+}
+
+export async function readPhoto(accessToken: string, fileId: string): Promise<{ mimeType: string; data: Buffer }> {
+  const drive = getDriveClient(accessToken);
+  const res = await drive.files.get({ fileId, alt: "media" }, { responseType: "arraybuffer" });
+  const mimeType = (res.headers?.["content-type"] as string | undefined) ?? "application/octet-stream";
+  return { mimeType, data: Buffer.from(res.data as ArrayBuffer) };
 }
 
 export async function listChapterFiles(accessToken: string): Promise<{ id: string; name: string }[]> {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import QuestionCard from "./QuestionCard";
 import VoiceRecorder from "./VoiceRecorder";
+import PhotoAttach from "./PhotoAttach";
 import type { Fragment, SavedQuestion, ThemeKey } from "@/lib/types";
 
 interface PendingQuestion {
@@ -23,6 +24,8 @@ export default function SessionScreen() {
   const [directedMode, setDirectedMode] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
   const [viewingSaved, setViewingSaved] = useState<SavedQuestion | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoResetKey, setPhotoResetKey] = useState(0);
 
   async function fetchNextQuestion(forceEngine = false) {
     setLoadingQuestion(true);
@@ -59,12 +62,23 @@ export default function SessionScreen() {
     });
   }, []);
 
+  async function uploadPhotoIfAny(): Promise<string[]> {
+    if (!photoFile) return [];
+    const formData = new FormData();
+    formData.append("image", photoFile);
+    const res = await fetch("/api/photos", { method: "POST", body: formData });
+    if (!res.ok) throw new Error("Failed to upload photo");
+    const data = await res.json();
+    return [data.photo.id as string];
+  }
+
   async function submitAnswer() {
     if (!answer.trim()) return;
     if (!directedMode && !viewingSaved && !pending) return;
     setSubmitting(true);
     setError(null);
     try {
+      const photoIds = await uploadPhotoIfAny();
       const payload = viewingSaved
         ? {
             rawText: answer,
@@ -73,9 +87,10 @@ export default function SessionScreen() {
             targetTheme: viewingSaved.targetTheme,
             selfDirected: viewingSaved.followUp,
             savedQuestionId: viewingSaved.id,
+            photoIds,
           }
         : directedMode
-          ? { rawText: answer, selfDirected: true }
+          ? { rawText: answer, selfDirected: true, photoIds }
           : {
               rawText: answer,
               sourceQuestion: pending!.question,
@@ -83,6 +98,7 @@ export default function SessionScreen() {
               targetTheme: pending!.targetTheme,
               // Answering a follow-up continues the same thread.
               selfDirected: pending!.followUp,
+              photoIds,
             };
 
       const res = await fetch("/api/session/answer", {
@@ -95,6 +111,8 @@ export default function SessionScreen() {
       setSessionFragments((prev) => [data.fragment as Fragment, ...prev]);
       setAnswer("");
       setDirectedMode(false);
+      setPhotoFile(null);
+      setPhotoResetKey((k) => k + 1);
       if (viewingSaved) {
         setViewingSaved(null);
         setSavedCount((c) => Math.max(0, c - 1));
@@ -243,7 +261,10 @@ export default function SessionScreen() {
       />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <VoiceRecorder onTranscribed={(text) => setAnswer((prev) => (prev ? `${prev} ${text}` : text))} disabled={loadingQuestion} />
+        <div className="flex flex-wrap items-center gap-3">
+          <VoiceRecorder onTranscribed={(text) => setAnswer((prev) => (prev ? `${prev} ${text}` : text))} disabled={loadingQuestion} />
+          <PhotoAttach key={photoResetKey} onChange={setPhotoFile} disabled={loadingQuestion || submitting} />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           {!directedMode && !viewingSaved && !loadingQuestion && (
             <>

@@ -24,6 +24,8 @@ interface AnswerBody {
   selfDirected?: boolean;
   /** If this answers a previously-saved question, its id - cleared from the saved queue on success. */
   savedQuestionId?: string;
+  /** Drive file IDs of photos already uploaded (via /api/photos) to attach to this fragment. */
+  photoIds?: string[];
 }
 
 const RECENT_SAME_CELL_LIMIT = 3;
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
       cleanedText,
       chapterRefs: [] as string[],
       selfDirected: body.selfDirected ?? false,
+      photoIds: body.photoIds ?? [],
     };
 
     await saveFragment(session.accessToken, fragment);

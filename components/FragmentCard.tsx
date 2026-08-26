@@ -40,6 +40,14 @@ export default function FragmentCard({ fragment, periods, onSaved }: FragmentCar
       {!editing ? (
         <>
           <p className="whitespace-pre-wrap">{fragment.cleanedText}</p>
+          {fragment.photoIds && fragment.photoIds.length > 0 && (
+            <div className="mt-3 flex gap-2">
+              {fragment.photoIds.map((id) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={id} src={`/api/photos/${id}`} alt="Attached to this memory" className="h-24 w-24 rounded object-cover" />
+              ))}
+            </div>
+          )}
           <div className="mt-3 flex items-center justify-between text-sm text-neutral-500">
             <span>
               {periodLabel} &middot; {THEME_LABELS[fragment.theme]}
