@@ -16,7 +16,10 @@ of continuing to target it as thin. Scott can also steer the conversation
 himself ("Something else on my mind →") instead of answering the engine's
 question - once he does, the next question follows up on his topic instead
 of snapping back to gap-filling, until he clicks back to regular questions.
-The review feed and chapters viewer are real routes reading live data. The
+He can also attach a photo to whatever he's answering (e.g. a picture tied
+to that specific memory), stored in Drive and shown as a thumbnail in the
+review feed. The review feed and chapters viewer are real routes reading
+live data. The
 consolidation pass (fragments → narrative chapters) is not built yet - the
 spec marks it "to be detailed further."
 
@@ -84,10 +87,10 @@ automatically on first sign-in.
 
 ## Data model
 
-Everything is stored as JSON files in Drive - no database:
+Everything is stored as files in Drive - no database:
 
 - `Biographer Data/fragments/{id}.json` - one file per fragment (raw text,
-  cleaned text, inferred period/theme tags, source question)
+  cleaned text, inferred period/theme tags, source question, attached photo IDs)
 - `Biographer Data/coverage-map.json` - tracks which (life period, theme)
   combinations are thin vs. well-covered, steering future questions
 - `Biographer Data/skeleton.json` - the rough life skeleton gathered during
@@ -95,6 +98,8 @@ Everything is stored as JSON files in Drive - no database:
   `completedAt` is set, the app moves from intake into normal daily questions
 - `Biographer Data/saved-questions.json` - questions Scott set aside to
   answer later instead of now, surfaced only when he chooses to pull one up
+- `Biographer Data/photos/` - images attached to fragments, served back
+  through `/api/photos/[id]` rather than made public
 - `Biographer Data/chapters/` - reserved for the consolidation pass (not
   built yet)
 
