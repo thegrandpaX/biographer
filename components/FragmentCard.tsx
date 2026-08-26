@@ -36,40 +36,40 @@ export default function FragmentCard({ fragment, periods, onSaved }: FragmentCar
   const periodLabel = periods.find((p) => p.id === fragment.periodId)?.label ?? fragment.periodId;
 
   return (
-    <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <div className="rounded-2xl border border-border bg-card p-6">
       {!editing ? (
-        <>
-          <p className="whitespace-pre-wrap">{fragment.cleanedText}</p>
+        <div className="flex flex-col gap-4">
+          <p className="font-serif text-[16px] leading-relaxed text-ink whitespace-pre-wrap">{fragment.cleanedText}</p>
           {fragment.photoIds && fragment.photoIds.length > 0 && (
-            <div className="mt-3 flex gap-2">
+            <div className="flex gap-2">
               {fragment.photoIds.map((id) => (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={id} src={`/api/photos/${id}`} alt="Attached to this memory" className="h-24 w-24 rounded object-cover" />
+                <img key={id} src={`/api/photos/${id}`} alt="Attached to this memory" className="h-24 w-24 rounded-lg object-cover" />
               ))}
             </div>
           )}
-          <div className="mt-3 flex items-center justify-between text-sm text-neutral-500">
-            <span>
+          <div className="flex items-center justify-between">
+            <span className="rounded-full bg-accent2-soft px-3 py-1 text-xs font-semibold text-accent2">
               {periodLabel} &middot; {THEME_LABELS[fragment.theme]}
             </span>
-            <button onClick={() => setEditing(true)} className="underline hover:text-neutral-800 dark:hover:text-neutral-200">
+            <button onClick={() => setEditing(true)} className="text-sm text-ink-soft underline hover:text-ink">
               Edit
             </button>
           </div>
-        </>
+        </div>
       ) : (
         <div className="flex flex-col gap-3">
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={4}
-            className="w-full rounded border border-neutral-300 p-2 dark:border-neutral-700 dark:bg-neutral-900"
+            className="w-full rounded-lg border border-border bg-paper p-3 text-ink"
           />
           <div className="flex gap-2">
             <select
               value={periodId}
               onChange={(e) => setPeriodId(e.target.value)}
-              className="rounded border border-neutral-300 p-1 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+              className="rounded-lg border border-border bg-paper p-1.5 text-sm text-ink"
             >
               {periods.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -80,7 +80,7 @@ export default function FragmentCard({ fragment, periods, onSaved }: FragmentCar
             <select
               value={theme}
               onChange={(e) => setTheme(e.target.value as ThemeKey)}
-              className="rounded border border-neutral-300 p-1 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+              className="rounded-lg border border-border bg-paper p-1.5 text-sm text-ink"
             >
               {ALL_THEMES.map((t) => (
                 <option key={t} value={t}>
@@ -93,11 +93,11 @@ export default function FragmentCard({ fragment, periods, onSaved }: FragmentCar
             <button
               onClick={save}
               disabled={saving}
-              className="rounded bg-neutral-800 px-3 py-1 text-sm text-white hover:bg-neutral-700 disabled:opacity-50"
+              className="rounded-full bg-ink px-4 py-1.5 text-sm font-semibold text-paper hover:opacity-90 disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save"}
             </button>
-            <button onClick={() => setEditing(false)} className="rounded px-3 py-1 text-sm text-neutral-500 hover:text-neutral-800">
+            <button onClick={() => setEditing(false)} className="rounded-full px-4 py-1.5 text-sm text-ink-soft hover:text-ink">
               Cancel
             </button>
           </div>

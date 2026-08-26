@@ -125,21 +125,38 @@ export default function VoiceRecorder({ onTranscribed, disabled }: VoiceRecorder
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="relative">
+      {(interimText || error) && (
+        <div className="absolute bottom-full left-0 mb-1.5 w-max max-w-[240px]">
+          {interimText && <p className="text-xs italic text-ink-faint">{interimText}</p>}
+          {error && <p className="text-xs text-record">{error}</p>}
+        </div>
+      )}
       <button
         type="button"
         disabled={disabled}
         onClick={recording ? stopRecording : startRecording}
-        className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-          recording
-            ? "bg-red-600 text-white hover:bg-red-700"
-            : "bg-neutral-800 text-white hover:bg-neutral-700"
-        } disabled:opacity-50`}
+        aria-label={recording ? "Stop recording" : "Record answer"}
+        title={recording ? "Stop recording" : "Record answer"}
+        className={`flex h-[38px] w-[38px] items-center justify-center rounded-full transition disabled:opacity-50 ${
+          recording ? "bg-accent-soft" : "hover:bg-border-soft"
+        }`}
       >
-        {recording ? "Stop recording" : "Record answer"}
+        <svg
+          width="19"
+          height="19"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={recording ? "var(--record)" : "var(--accent)"}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+          <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
+          <line x1="12" y1="18" x2="12" y2="22" />
+        </svg>
       </button>
-      {recording && interimText && <p className="text-sm italic text-neutral-400">{interimText}</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }

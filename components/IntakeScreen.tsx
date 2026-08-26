@@ -111,55 +111,57 @@ export default function IntakeScreen({ initialSkeleton }: IntakeScreenProps) {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
       <div>
-        <p className="text-sm font-medium text-neutral-500">
+        <p className="text-sm font-medium text-ink-soft">
           Getting the basic skeleton first ({categoryIndex + 1}/{INTAKE_CATEGORY_ORDER.length}) -{" "}
           {INTAKE_CATEGORY_LABELS[category]}
         </p>
       </div>
 
-      <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         {loadingQuestion || !question ? (
-          <p className="text-neutral-400">Thinking of a question…</p>
+          <p className="text-ink-faint">Thinking of a question&hellip;</p>
         ) : (
-          <p className="text-xl leading-relaxed">{question}</p>
+          <p className="font-serif text-xl italic leading-relaxed text-ink">{question}</p>
         )}
       </div>
 
-      <textarea
-        value={answer}
-        onChange={(e) => setAnswer(e.target.value)}
-        placeholder="Type your answer, or record it below… rough and approximate is fine."
-        rows={5}
-        disabled={loadingQuestion}
-        className="w-full rounded-lg border border-neutral-300 p-3 dark:border-neutral-700 dark:bg-neutral-900"
-      />
-
-      <div className="flex items-center justify-between">
-        <VoiceRecorder onTranscribed={(text) => setAnswer((prev) => (prev ? `${prev} ${text}` : text))} disabled={loadingQuestion} />
-        <div className="flex gap-2">
-          <button
-            onClick={nextSection}
-            disabled={finishing}
-            className="rounded-full px-4 py-2 text-sm text-neutral-500 hover:text-neutral-800 disabled:opacity-50 dark:hover:text-neutral-200"
-          >
-            {finishing ? "Finishing…" : isLastCategory ? "Finish intake" : "Next section →"}
-          </button>
-          <button
-            onClick={submitAnswer}
-            disabled={submitting || loadingQuestion || !answer.trim()}
-            className="rounded-full bg-neutral-800 px-5 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
-          >
-            {submitting ? "Saving…" : "Submit answer"}
-          </button>
+      <div className="relative">
+        <textarea
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          placeholder="Type your answer, or record it below… rough and approximate is fine."
+          rows={5}
+          disabled={loadingQuestion}
+          className="w-full resize-none rounded-2xl border border-border bg-card p-5 pb-14 text-[15px] text-ink placeholder:text-ink-faint focus:outline-none"
+        />
+        <div className="absolute bottom-2 left-2">
+          <VoiceRecorder onTranscribed={(text) => setAnswer((prev) => (prev ? `${prev} ${text}` : text))} disabled={loadingQuestion} />
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <div className="flex items-center justify-end gap-3">
+        <button
+          onClick={nextSection}
+          disabled={finishing}
+          className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-ink-soft hover:bg-border-soft disabled:opacity-50"
+        >
+          {finishing ? "Finishing…" : isLastCategory ? "Finish intake" : "Next section →"}
+        </button>
+        <button
+          onClick={submitAnswer}
+          disabled={submitting || loadingQuestion || !answer.trim()}
+          className="rounded-full bg-ink px-6 py-2.5 text-sm font-semibold text-paper hover:opacity-90 disabled:opacity-50"
+        >
+          {submitting ? "Saving…" : "Submit answer"}
+        </button>
+      </div>
+
+      {error && <p className="text-sm text-record">{error}</p>}
 
       {summary.length > 0 && (
-        <div className="mt-2 border-t border-neutral-200 pt-4 dark:border-neutral-800">
-          <p className="mb-2 text-sm font-medium text-neutral-500">Captured so far</p>
-          <ul className="flex flex-col gap-1 text-sm text-neutral-600 dark:text-neutral-400">
+        <div className="mt-2 border-t border-border-soft pt-4">
+          <p className="mb-2 text-sm font-medium text-ink-soft">Captured so far</p>
+          <ul className="flex flex-col gap-1 text-sm text-ink-soft">
             {summary.map((line, i) => (
               <li key={i}>- {line}</li>
             ))}

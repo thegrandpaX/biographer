@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
+import { Newsreader, Work_Sans } from "next/font/google";
 import "./globals.css";
 import { auth, signOut } from "@/lib/auth";
+import HeaderNav from "@/components/HeaderNav";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
   subsets: ["latin"],
+  style: ["normal", "italic"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const workSans = Work_Sans({
+  variable: "--font-work-sans",
   subsets: ["latin"],
 });
 
@@ -26,23 +27,19 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${newsreader.variable} ${workSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
+      <body className="min-h-full flex flex-col bg-paper text-ink">
         {session && (
-          <header className="flex items-center justify-between border-b border-neutral-200 px-6 py-3 dark:border-neutral-800">
-            <nav className="flex gap-4 text-sm font-medium">
-              <Link href="/">Today</Link>
-              <Link href="/review">Review</Link>
-              <Link href="/chapters">Chapters</Link>
-            </nav>
+          <header className="flex items-center justify-between border-b border-border px-8 py-4">
+            <HeaderNav />
             <form
               action={async () => {
                 "use server";
                 await signOut();
               }}
             >
-              <button type="submit" className="text-sm text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200">
+              <button type="submit" className="text-sm text-ink-faint hover:text-ink-soft">
                 Sign out
               </button>
             </form>

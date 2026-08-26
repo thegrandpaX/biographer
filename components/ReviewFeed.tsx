@@ -24,11 +24,11 @@ export default function ReviewFeed() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
-      <h1 className="text-2xl font-semibold">Review</h1>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {!fragments && !error && <p className="text-neutral-400">Loading…</p>}
+      <h1 className="font-serif text-3xl italic font-medium text-ink">Review</h1>
+      {error && <p className="text-sm text-record">{error}</p>}
+      {!fragments && !error && <p className="text-ink-faint">Loading…</p>}
       {fragments && fragments.length === 0 && (
-        <p className="text-neutral-400">No fragments yet - answer a question on the Today tab to get started.</p>
+        <p className="text-ink-faint">No fragments yet - answer a question on the Interview tab to get started.</p>
       )}
       {fragments?.map((fragment) => (
         <FragmentCard key={fragment.id} fragment={fragment} periods={SEED_LIFE_PERIODS} onSaved={handleSaved} />
