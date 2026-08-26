@@ -11,7 +11,9 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const forceEngine = searchParams.get("mode") === "engine";
+  const mode = searchParams.get("mode");
+  const excludePeriod = mode === "newTopic" ? searchParams.get("excludePeriod") : null;
+  const forceEngine = mode === "engine" || mode === "newTopic";
 
   try {
     const [coverageMap, fragments, skeleton] = await Promise.all([
@@ -33,7 +35,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const result = await generateQuestion(coverageMap, fragments, skeleton);
+    const result = await generateQuestion(coverageMap, fragments, skeleton, excludePeriod ?? undefined);
     return NextResponse.json({ ...result, followUp: false });
   } catch (error) {
     if (isGoogleAuthError(error)) {

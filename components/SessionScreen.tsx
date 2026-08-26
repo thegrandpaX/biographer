@@ -32,11 +32,19 @@ export default function SessionScreen() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoResetKey, setPhotoResetKey] = useState(0);
 
-  async function fetchNextQuestion(forceEngine = false) {
+  async function fetchNextQuestion(opts: { forceEngine?: boolean; excludePeriod?: string } = {}) {
     setLoadingQuestion(true);
     setError(null);
     try {
-      const res = await fetch(`/api/session/question${forceEngine ? "?mode=engine" : ""}`);
+      const params = new URLSearchParams();
+      if (opts.excludePeriod) {
+        params.set("mode", "newTopic");
+        params.set("excludePeriod", opts.excludePeriod);
+      } else if (opts.forceEngine) {
+        params.set("mode", "engine");
+      }
+      const qs = params.toString();
+      const res = await fetch(`/api/session/question${qs ? `?${qs}` : ""}`);
       if (!res.ok) throw new Error("Failed to get a question");
       const data = (await res.json()) as PendingQuestion;
       setPending(data);
@@ -150,6 +158,13 @@ export default function SessionScreen() {
     } catch {
       setError("Couldn't save that question for later. Try again.");
     }
+  }
+
+  async function newTopic() {
+    setAnswer("");
+    setPhotoFile(null);
+    setPhotoResetKey((k) => k + 1);
+    await fetchNextQuestion({ excludePeriod: pending?.targetPeriodId });
   }
 
   async function openSavedQuestion() {
@@ -296,7 +311,7 @@ export default function SessionScreen() {
           {pending?.followUp && !loadingQuestion && (
             <p className="text-sm text-ink-soft">
               Following up on what you shared —{" "}
-              <button onClick={() => fetchNextQuestion(true)} className="underline hover:text-ink">
+              <button onClick={() => fetchNextQuestion({ forceEngine: true })} className="underline hover:text-ink">
                 back to today&apos;s regular questions
               </button>
             </p>
@@ -329,12 +344,21 @@ export default function SessionScreen() {
               &larr; Back to today&apos;s question
             </button>
           ) : (
-            <button
-              onClick={() => setDirectedMode(true)}
-              className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-ink-soft hover:bg-border-soft"
-            >
-              Something else on my mind &rarr;
-            </button>
+            <>
+              <button
+                onClick={() => setDirectedMode(true)}
+                className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-ink-soft hover:bg-border-soft"
+              >
+                Something else on my mind &rarr;
+              </button>
+              <button
+                onClick={newTopic}
+                disabled={loadingQuestion}
+                className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-ink-soft hover:bg-border-soft disabled:opacity-50"
+              >
+                New topic
+              </button>
+            </>
           ))}
         <button
           onClick={submitAnswer}

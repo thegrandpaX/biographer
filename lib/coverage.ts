@@ -27,9 +27,23 @@ export function getThinCells(map: CoverageMap): { periodId: string; theme: Theme
     .sort((a, b) => a.fragmentCount - b.fragmentCount);
 }
 
-/** Picks the single thinnest-covered (period, theme) pair to target next. */
-export function pickNextTarget(map: CoverageMap): { periodId: string; theme: ThemeKey } | null {
+/**
+ * Picks the single thinnest-covered (period, theme) pair to target next.
+ * When excludePeriodId is given (the "new topic" override), the thinnest
+ * cell from a DIFFERENT life period is preferred, so the engine genuinely
+ * branches rather than picking something that happens to be adjacent.
+ * Falls back to including the excluded period if nothing else is left
+ * (e.g. only one period has any coverage cells so far).
+ */
+export function pickNextTarget(
+  map: CoverageMap,
+  excludePeriodId?: string
+): { periodId: string; theme: ThemeKey } | null {
   const thin = getThinCells(map);
+  if (excludePeriodId) {
+    const otherPeriods = thin.filter((c) => c.periodId !== excludePeriodId);
+    if (otherPeriods.length > 0) return { periodId: otherPeriods[0].periodId, theme: otherPeriods[0].theme };
+  }
   return thin.length > 0 ? { periodId: thin[0].periodId, theme: thin[0].theme } : null;
 }
 

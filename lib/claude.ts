@@ -44,14 +44,16 @@ export interface GeneratedQuestion {
 export async function generateQuestion(
   coverageMap: CoverageMap,
   recentFragments: Fragment[],
-  skeleton: LifeSkeleton
+  skeleton: LifeSkeleton,
+  excludePeriodId?: string
 ): Promise<GeneratedQuestion> {
-  const target = pickNextTarget(coverageMap);
+  const target = pickNextTarget(coverageMap, excludePeriodId);
   if (!target) {
     throw new Error("No coverage target available - all periods/themes tapered off");
   }
   const period = coverageMap.periods.find((p: LifePeriod) => p.id === target.periodId);
   const themeLabel = THEME_LABELS[target.theme];
+  const isNewBranch = Boolean(excludePeriodId) && target.periodId !== excludePeriodId;
 
   const recentContext = recentFragments
     .slice(0, 8)
@@ -83,6 +85,11 @@ export async function generateQuestion(
           `Target theme: ${themeLabel}\n\n` +
           (recentContext
             ? `Recent fragments for context (most recent first):\n${recentContext}\n\n`
+            : "") +
+          (isNewBranch
+            ? "The person explicitly asked to move on to a completely different part of their " +
+              "life - ask a question that clearly signals a fresh start, not a continuation of " +
+              "whatever came before.\n\n"
             : "") +
           "Ask the next question.",
       },
