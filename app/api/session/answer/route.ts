@@ -9,9 +9,11 @@ import {
   saveFragment,
   writeCoverageMap,
   writeSavedQuestions,
+  writeSkeleton,
 } from "@/lib/drive";
-import { assessTaper, cleanupTranscript, inferTags } from "@/lib/claude";
+import { assessTaper, cleanupTranscript, extractSkeletonFacts, inferTags } from "@/lib/claude";
 import { markTaperedOff, recordFragment } from "@/lib/coverage";
+import { mergeSkeletonFacts } from "@/lib/skeleton";
 import { isGoogleAuthError } from "@/lib/authErrors";
 import type { ThemeKey } from "@/lib/types";
 
@@ -82,6 +84,12 @@ export async function POST(request: Request) {
       updatedMap = markTaperedOff(updatedMap, tags.periodId, tags.theme);
     }
     await writeCoverageMap(session.accessToken, updatedMap);
+
+    // Promote any standing facts from this answer into the skeleton - not
+    // just at intake - so it stays current instead of frozen at day one.
+    const newFacts = await extractSkeletonFacts(cleanedText);
+    const updatedSkeleton = mergeSkeletonFacts(skeleton, newFacts);
+    await writeSkeleton(session.accessToken, updatedSkeleton);
 
     if (body.savedQuestionId) {
       const savedQuestions = await readSavedQuestions(session.accessToken);

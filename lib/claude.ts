@@ -45,7 +45,8 @@ export async function generateQuestion(
   coverageMap: CoverageMap,
   recentFragments: Fragment[],
   skeleton: LifeSkeleton,
-  excludePeriodId?: string
+  excludePeriodId?: string,
+  recentQuestions?: string[]
 ): Promise<GeneratedQuestion> {
   const target = pickNextTarget(coverageMap, excludePeriodId);
   if (!target) {
@@ -59,6 +60,7 @@ export async function generateQuestion(
     .slice(0, 8)
     .map((f) => `- (${f.periodId}/${f.theme}) ${f.cleanedText}`)
     .join("\n");
+  const recentQuestionsList = (recentQuestions ?? []).filter(Boolean);
 
   const client = getClient();
   const msg = await client.messages.create({
@@ -73,9 +75,12 @@ export async function generateQuestion(
       "Nothing is taboo - heavy or sensitive territory is high-value, not to be avoided. " +
       "You have standing background context (the life skeleton) - use it to ask sharper, " +
       "better-anchored questions (e.g. referencing a known relationship or place by name) " +
-      "rather than generic ones. If relevant, you may reference a past fragment to draw a " +
-      "connection, but the question must still center on the target period/theme. Return " +
-      "ONLY the question text, no preamble, no quotation marks.",
+      "rather than generic ones, and trust it over any assumption you might otherwise make " +
+      "(e.g. don't guess at circumstances the skeleton already states). If relevant, you " +
+      "may reference a past fragment to draw a connection, but the question must still " +
+      "center on the target period/theme. Never repeat or closely reword a recently-asked " +
+      "question - if one of the recent questions listed already covers this angle, find a " +
+      "genuinely different one. Return ONLY the question text, no preamble, no quotation marks.",
     messages: [
       {
         role: "user",
@@ -85,6 +90,9 @@ export async function generateQuestion(
           `Target theme: ${themeLabel}\n\n` +
           (recentContext
             ? `Recent fragments for context (most recent first):\n${recentContext}\n\n`
+            : "") +
+          (recentQuestionsList.length > 0
+            ? `Questions already asked recently - do not repeat or closely reword any of these:\n${recentQuestionsList.map((q) => `- ${q}`).join("\n")}\n\n`
             : "") +
           (isNewBranch
             ? "The person explicitly asked to move on to a completely different part of their " +
@@ -110,8 +118,10 @@ export async function generateQuestion(
  */
 export async function generateFollowUpQuestion(
   lastFragment: Fragment,
-  skeleton: LifeSkeleton
+  skeleton: LifeSkeleton,
+  recentQuestions?: string[]
 ): Promise<string> {
+  const recentQuestionsList = (recentQuestions ?? []).filter(Boolean);
   const client = getClient();
   const msg = await client.messages.create({
     model: MODEL,
@@ -122,14 +132,18 @@ export async function generateFollowUpQuestion(
       "that thread, not steer back to something unrelated. Ask ONE natural, curious " +
       "follow-up that goes deeper into what they just shared (more detail, a related " +
       "person or moment, how they felt about it). You may draw on the life skeleton for " +
-      "context if it helps sharpen the question. Nothing is taboo. Return ONLY the " +
-      "question text, no preamble, no quotation marks.",
+      "context if it helps sharpen the question. Never repeat or closely reword a " +
+      "recently-asked question. Nothing is taboo. Return ONLY the question text, no " +
+      "preamble, no quotation marks.",
     messages: [
       {
         role: "user",
         content:
           `Life skeleton (standing context):\n${summarizeSkeleton(skeleton)}\n\n` +
           `What they just shared:\n${lastFragment.cleanedText}\n\n` +
+          (recentQuestionsList.length > 0
+            ? `Questions already asked recently - do not repeat or closely reword any of these:\n${recentQuestionsList.map((q) => `- ${q}`).join("\n")}\n\n`
+            : "") +
           "Ask a follow-up that stays on this thread.",
       },
     ],
@@ -382,7 +396,13 @@ const SKELETON_FACTS_TOOL: Anthropic.Tool = {
   },
 };
 
-/** Extracts life-skeleton facts from a single intake answer via tool use. */
+/**
+ * Extracts life-skeleton facts from an answer via tool use. Used both
+ * during intake and on every regular fragment afterward - important facts
+ * often surface well after intake (e.g. "kept the house and kids" coming
+ * up in a later answer), and the skeleton needs to stay current rather
+ * than frozen at whatever was captured on day one.
+ */
 export async function extractSkeletonFacts(cleanedText: string): Promise<SkeletonFacts> {
   const client = getClient();
   const msg = await client.messages.create({
@@ -391,9 +411,11 @@ export async function extractSkeletonFacts(cleanedText: string): Promise<Skeleto
     tools: [SKELETON_FACTS_TOOL],
     tool_choice: { type: "tool", name: "record_skeleton_facts" },
     system:
-      "Extract rough life-skeleton facts from this intake answer: birth info, places lived " +
-      "with rough date ranges, key relationships with rough eras, and major life transitions. " +
-      "Only extract what's actually stated. Leave fields out entirely if not mentioned.",
+      "Extract rough life-skeleton facts from this answer: birth info, places lived with " +
+      "rough date ranges, key relationships with rough eras, and major life transitions or " +
+      "standing circumstances worth remembering (e.g. who kept the house/custody after a " +
+      "divorce, a major change in living situation). Only extract what's actually stated - " +
+      "do not infer or guess. Leave fields out entirely if not mentioned.",
     messages: [{ role: "user", content: cleanedText }],
   });
 

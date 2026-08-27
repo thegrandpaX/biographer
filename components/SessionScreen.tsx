@@ -32,7 +32,9 @@ export default function SessionScreen() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoResetKey, setPhotoResetKey] = useState(0);
 
-  async function fetchNextQuestion(opts: { forceEngine?: boolean; excludePeriod?: string } = {}) {
+  async function fetchNextQuestion(
+    opts: { forceEngine?: boolean; excludePeriod?: string; avoidQuestion?: string } = {}
+  ) {
     setLoadingQuestion(true);
     setError(null);
     try {
@@ -43,6 +45,7 @@ export default function SessionScreen() {
       } else if (opts.forceEngine) {
         params.set("mode", "engine");
       }
+      if (opts.avoidQuestion) params.set("avoidQuestion", opts.avoidQuestion);
       const qs = params.toString();
       const res = await fetch(`/api/session/question${qs ? `?${qs}` : ""}`);
       if (!res.ok) throw new Error("Failed to get a question");
@@ -164,7 +167,7 @@ export default function SessionScreen() {
     setAnswer("");
     setPhotoFile(null);
     setPhotoResetKey((k) => k + 1);
-    await fetchNextQuestion({ excludePeriod: pending?.targetPeriodId });
+    await fetchNextQuestion({ excludePeriod: pending?.targetPeriodId, avoidQuestion: pending?.question });
   }
 
   async function openSavedQuestion() {
@@ -311,7 +314,10 @@ export default function SessionScreen() {
           {pending?.followUp && !loadingQuestion && (
             <p className="text-sm text-ink-soft">
               Following up on what you shared —{" "}
-              <button onClick={() => fetchNextQuestion({ forceEngine: true })} className="underline hover:text-ink">
+              <button
+                onClick={() => fetchNextQuestion({ forceEngine: true, avoidQuestion: pending?.question })}
+                className="underline hover:text-ink"
+              >
                 back to today&apos;s regular questions
               </button>
             </p>

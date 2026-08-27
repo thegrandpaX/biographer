@@ -7,7 +7,12 @@ for the full design rationale.
 This is the initial scaffold: a one-time intake step gathers a rough life
 skeleton (birth info, key locations, key relationships, major transitions)
 before deep-probing questions begin, so the question engine and tagging have
-standing context instead of guessing blind. After intake, the daily-question
+standing context instead of guessing blind. That skeleton isn't frozen after
+intake either - important facts that surface later in regular answers (e.g.
+"kept the house and kids" coming up well after the divorce was first
+mentioned) get promoted into it too, and the engine checks recently-asked
+questions before firing the next one so it doesn't repeat itself. After
+intake, the daily-question
 loop (ask → answer by voice or text → cleanup → tag → save fragment → update
 coverage map) is wired end-to-end. The engine also backs off a period/theme
 once it's tapped out - explicitly signaled ("that's about it") or implicitly

@@ -14,6 +14,9 @@ export async function GET(request: Request) {
   const mode = searchParams.get("mode");
   const excludePeriod = mode === "newTopic" ? searchParams.get("excludePeriod") : null;
   const forceEngine = mode === "engine" || mode === "newTopic";
+  // The question currently on screen, if the client is re-requesting
+  // without having answered it (New topic, back-to-regular-questions).
+  const avoidQuestion = searchParams.get("avoidQuestion");
 
   try {
     const [coverageMap, fragments, skeleton] = await Promise.all([
@@ -22,11 +25,19 @@ export async function GET(request: Request) {
       readSkeleton(session.accessToken),
     ]);
 
+    // Short-term memory of recently-asked questions, so the engine doesn't
+    // fire the same (or a reworded) question twice in a row.
+    const recentQuestions = fragments
+      .slice(0, 5)
+      .map((f) => f.sourceQuestion)
+      .filter((q) => !q.startsWith("(Scott's own topic"));
+    if (avoidQuestion) recentQuestions.unshift(avoidQuestion);
+
     const lastFragment = fragments[0];
     const isFollowUp = !forceEngine && lastFragment?.selfDirected === true;
 
     if (isFollowUp) {
-      const question = await generateFollowUpQuestion(lastFragment, skeleton);
+      const question = await generateFollowUpQuestion(lastFragment, skeleton, recentQuestions);
       return NextResponse.json({
         question,
         targetPeriodId: lastFragment.periodId,
@@ -35,7 +46,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const result = await generateQuestion(coverageMap, fragments, skeleton, excludePeriod ?? undefined);
+    const result = await generateQuestion(coverageMap, fragments, skeleton, excludePeriod ?? undefined, recentQuestions);
     return NextResponse.json({ ...result, followUp: false });
   } catch (error) {
     if (isGoogleAuthError(error)) {
