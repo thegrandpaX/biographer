@@ -57,7 +57,17 @@ export async function POST(request: Request) {
       periodId: body.targetPeriodId ?? coverageMap.periods[0]?.id ?? "unknown",
       theme: body.targetTheme ?? ("daily-life" as ThemeKey),
     };
-    const tags = await inferTags(cleanedText, coverageMap.periods, hint, skeleton);
+    // Tagging and skeleton-fact extraction are independent of each other -
+    // run them concurrently.
+    const [tags, newFacts] = await Promise.all([
+      inferTags(cleanedText, coverageMap.periods, hint, skeleton),
+      extractSkeletonFacts(cleanedText),
+    ]);
+
+    // Promote any standing facts from this answer into the skeleton - not
+    // just at intake - so it stays current instead of frozen at day one.
+    const updatedSkeleton = mergeSkeletonFacts(skeleton, newFacts);
+    await writeSkeleton(session.accessToken, updatedSkeleton);
 
     const fragment = {
       id: randomUUID(),
@@ -70,6 +80,7 @@ export async function POST(request: Request) {
       chapterRefs: [] as string[],
       selfDirected: body.selfDirected ?? false,
       photoIds: body.photoIds ?? [],
+      skeletonProcessed: true,
     };
 
     await saveFragment(session.accessToken, fragment);
@@ -84,12 +95,6 @@ export async function POST(request: Request) {
       updatedMap = markTaperedOff(updatedMap, tags.periodId, tags.theme);
     }
     await writeCoverageMap(session.accessToken, updatedMap);
-
-    // Promote any standing facts from this answer into the skeleton - not
-    // just at intake - so it stays current instead of frozen at day one.
-    const newFacts = await extractSkeletonFacts(cleanedText);
-    const updatedSkeleton = mergeSkeletonFacts(skeleton, newFacts);
-    await writeSkeleton(session.accessToken, updatedSkeleton);
 
     if (body.savedQuestionId) {
       const savedQuestions = await readSavedQuestions(session.accessToken);

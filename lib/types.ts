@@ -61,6 +61,13 @@ export interface Fragment {
   selfDirected?: boolean;
   /** Drive file IDs of photos attached to this fragment. */
   photoIds?: string[];
+  /**
+   * True once this fragment's text has been scanned for skeleton facts
+   * (birth info, relationships, transitions/circumstances) and merged into
+   * the standing skeleton - either at save time or via the one-time
+   * rescan. Prevents re-scanning the same fragment and duplicating facts.
+   */
+  skeletonProcessed?: boolean;
 }
 
 /**
