@@ -10,9 +10,11 @@ before deep-probing questions begin, so the question engine and tagging have
 standing context instead of guessing blind. That skeleton isn't frozen after
 intake either - important facts that surface later in regular answers (e.g.
 "kept the house and kids" coming up well after the divorce was first
-mentioned) get promoted into it too, and the engine checks recently-asked
-questions before firing the next one so it doesn't repeat itself. After
-intake, the daily-question
+mentioned) get promoted into it too. The engine also checks recently-asked
+questions before firing the next one - logged as soon as a question is
+shown (not just once it's answered), so revisiting or reloading the
+Interview page without answering doesn't slip past that check and produce
+a reworded repeat. After intake, the daily-question
 loop (ask → answer by voice or text → cleanup → tag → save fragment → update
 coverage map) is wired end-to-end. The engine also backs off a period/theme
 once it's tapped out - explicitly signaled ("that's about it") or implicitly

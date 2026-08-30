@@ -16,6 +16,8 @@ const PHOTOS_FOLDER_NAME = "photos";
 const COVERAGE_MAP_FILENAME = "coverage-map.json";
 const SKELETON_FILENAME = "skeleton.json";
 const SAVED_QUESTIONS_FILENAME = "saved-questions.json";
+const RECENT_QUESTIONS_FILENAME = "recent-questions.json";
+const RECENT_QUESTIONS_LIMIT = 10;
 
 function getDriveClient(accessToken: string): drive_v3.Drive {
   const auth = new google.auth.OAuth2();
@@ -215,6 +217,27 @@ export async function writeSavedQuestions(accessToken: string, saved: SavedQuest
   const drive = getDriveClient(accessToken);
   const { rootId } = await ensureAppStructure(accessToken);
   await writeJsonFile(drive, rootId, SAVED_QUESTIONS_FILENAME, saved);
+}
+
+export async function readRecentQuestions(accessToken: string): Promise<string[]> {
+  const drive = getDriveClient(accessToken);
+  const { rootId } = await ensureAppStructure(accessToken);
+  const existing = await readJsonFile<string[]>(drive, rootId, RECENT_QUESTIONS_FILENAME);
+  return existing ?? [];
+}
+
+/**
+ * Logs a question as shown, regardless of whether it ever gets answered -
+ * a revisited/reloaded Interview page re-generates a question with no
+ * fragment to show for it, so relying on answered fragments alone misses
+ * that case entirely. Trimmed to the last RECENT_QUESTIONS_LIMIT.
+ */
+export async function appendRecentQuestion(accessToken: string, question: string): Promise<void> {
+  const drive = getDriveClient(accessToken);
+  const { rootId } = await ensureAppStructure(accessToken);
+  const existing = (await readJsonFile<string[]>(drive, rootId, RECENT_QUESTIONS_FILENAME)) ?? [];
+  const updated = [...existing, question].slice(-RECENT_QUESTIONS_LIMIT);
+  await writeJsonFile(drive, rootId, RECENT_QUESTIONS_FILENAME, updated);
 }
 
 export async function uploadPhoto(
