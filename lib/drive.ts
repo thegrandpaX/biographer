@@ -3,6 +3,7 @@ import { Readable } from "node:stream";
 import {
   SEED_LIFE_PERIODS,
   emptySkeleton,
+  type Chapter,
   type CoverageMap,
   type Fragment,
   type LifeSkeleton,
@@ -264,7 +265,19 @@ export async function readPhoto(accessToken: string, fileId: string): Promise<{ 
   return { mimeType, data: Buffer.from(res.data as ArrayBuffer) };
 }
 
-export async function listChapterFiles(accessToken: string): Promise<{ id: string; name: string }[]> {
+export async function readChapter(accessToken: string, periodId: string): Promise<Chapter | null> {
+  const drive = getDriveClient(accessToken);
+  const { chaptersId } = await ensureAppStructure(accessToken);
+  return readJsonFile<Chapter>(drive, chaptersId, `${periodId}.json`);
+}
+
+export async function writeChapter(accessToken: string, chapter: Chapter): Promise<void> {
+  const drive = getDriveClient(accessToken);
+  const { chaptersId } = await ensureAppStructure(accessToken);
+  await writeJsonFile(drive, chaptersId, `${chapter.id}.json`, chapter);
+}
+
+export async function listChapters(accessToken: string): Promise<Chapter[]> {
   const drive = getDriveClient(accessToken);
   const { chaptersId } = await ensureAppStructure(accessToken);
   const res = await drive.files.list({
@@ -272,5 +285,11 @@ export async function listChapterFiles(accessToken: string): Promise<{ id: strin
     fields: "files(id, name)",
     spaces: "drive",
   });
-  return (res.data.files ?? []).map((f) => ({ id: f.id!, name: f.name! }));
+  const files = (res.data.files ?? []).filter((f) => f.name?.endsWith(".json"));
+  return Promise.all(
+    files.map(async (f) => {
+      const fileRes = await drive.files.get({ fileId: f.id!, alt: "media" }, { responseType: "text" });
+      return JSON.parse(fileRes.data as unknown as string) as Chapter;
+    })
+  );
 }

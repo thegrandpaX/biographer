@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import {
   INTAKE_CATEGORY_LABELS,
   THEME_LABELS,
+  type Chapter,
   type CoverageMap,
   type Fragment,
   type IntakeCategory,
@@ -424,4 +425,59 @@ export async function extractSkeletonFacts(cleanedText: string): Promise<Skeleto
     return toolUse.input as SkeletonFacts;
   }
   return {};
+}
+
+/**
+ * Weaves fragments into a chapter's prose. If existingChapter is given, the
+ * new fragments are integrated into it - extending and revising transitions
+ * as needed, but preserving what's already there rather than rewriting
+ * wholesale (regeneration is incremental, not a full rewrite every pass).
+ * Otherwise drafts the chapter fresh from newFragments alone.
+ */
+export async function consolidateChapter(
+  existingChapter: Chapter | null,
+  newFragments: Fragment[],
+  periodLabel: string,
+  skeleton: LifeSkeleton
+): Promise<string> {
+  const client = getClient();
+  const fragmentBlock = newFragments
+    .map((f) => `- [${THEME_LABELS[f.theme]}] ${f.cleanedText}`)
+    .join("\n");
+
+  const system =
+    "You are weaving raw journal fragments into a chapter of someone's life story - the kind " +
+    "of clean, seamless prose a good memoir reads as. No footnotes, no citations back to " +
+    "fragments, no section headers or meta-commentary about the process. Preserve the " +
+    "person's authentic voice and phrasing already reflected in the fragments (they've " +
+    "already had filler words removed, not been paraphrased) rather than smoothing it into " +
+    "generic writing. Don't pad for length or trim to hit a target - let the material set " +
+    "the length. Nothing is taboo - write honestly, including heavy or difficult material, " +
+    "with the same honesty as the person's own account. Where fragments don't perfectly " +
+    "agree, write the most coherent read rather than flagging the discrepancy in the text. " +
+    "Return ONLY the chapter prose, nothing else - no title, no preamble.";
+
+  const userContent = existingChapter
+    ? `Life skeleton (standing context):\n${summarizeSkeleton(skeleton)}\n\n` +
+      `Chapter: ${periodLabel}\n\n` +
+      `Existing chapter text:\n${existingChapter.content}\n\n` +
+      `New fragments to weave in:\n${fragmentBlock}\n\n` +
+      "Integrate the new material into the existing chapter above. Extend it and revise " +
+      "transitions where needed so the new material fits naturally, but preserve the " +
+      "existing text's content and wording rather than rewriting it wholesale. Return the " +
+      "complete updated chapter."
+    : `Life skeleton (standing context):\n${summarizeSkeleton(skeleton)}\n\n` +
+      `Chapter: ${periodLabel}\n\n` +
+      `Fragments:\n${fragmentBlock}\n\n` +
+      "Draft this chapter from the fragments above.";
+
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 4096,
+    system,
+    messages: [{ role: "user", content: userContent }],
+  });
+
+  const text = msg.content.find((b) => b.type === "text");
+  return text && text.type === "text" ? text.text.trim() : existingChapter?.content ?? "";
 }

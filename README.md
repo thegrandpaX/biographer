@@ -26,9 +26,19 @@ of snapping back to gap-filling, until he clicks back to regular questions.
 He can also attach a photo to whatever he's answering (e.g. a picture tied
 to that specific memory), stored in Drive and shown as a thumbnail in the
 review feed. The review feed and chapters viewer are real routes reading
-live data. The
-consolidation pass (fragments → narrative chapters) is not built yet - the
-spec marks it "to be detailed further."
+live data.
+
+The consolidation pass now exists too, as a first pass: a manual "Run
+consolidation" button on the Chapters page weaves fragments into one prose
+chapter per life period. Regeneration is incremental - a chapter already on
+record gets new material integrated into it rather than rewritten from
+scratch, so wording that's already there survives later passes. It doesn't
+flag conflicting fragments in the prose; Scott catches anything off during
+his own read-through and corrects it at the fragment level. Not yet
+automatic/volume-based (the spec's actual target) - that layers on once the
+prose quality is proven out - and a chapter currently only draws from
+fragments tagged to its own period, not fragments from other periods that
+happen to comment back on it (spec's fuller vision, deferred for now).
 
 ## Stack
 
@@ -107,12 +117,14 @@ Everything is stored as files in Drive - no database:
   answer later instead of now, surfaced only when he chooses to pull one up
 - `Biographer Data/photos/` - images attached to fragments, served back
   through `/api/photos/[id]` rather than made public
-- `Biographer Data/chapters/` - reserved for the consolidation pass (not
-  built yet)
+- `Biographer Data/chapters/{periodId}.json` - one consolidated chapter per
+  life period (title, prose content, the fragment IDs already woven in)
 
 ## Not yet built
 
-- Consolidation pass (fragments -> narrative chapters)
+- Automatic/volume-based consolidation trigger (currently a manual button)
+- Cross-period fragment matching in consolidation (a fragment from one
+  period commenting back on another only shows up in its own chapter for now)
 - Automatic post-session fragment splitting for multi-topic sessions (each
   answer currently becomes one fragment; the spec's fuller design lets one
   continuous conversation get split into several fragments after the fact)

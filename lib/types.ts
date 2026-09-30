@@ -71,6 +71,21 @@ export interface Fragment {
 }
 
 /**
+ * A consolidated narrative chapter, woven from fragments tagged to one life
+ * period. Regenerated incrementally: fragmentIds is what's already been
+ * woven in, so a later pass only needs to integrate what's new rather than
+ * re-synthesizing everything from scratch.
+ */
+export interface Chapter {
+  id: string; // = periodId
+  periodId: string;
+  title: string;
+  content: string; // prose, paragraphs separated by blank lines
+  fragmentIds: string[];
+  updatedAt: string; // ISO 8601
+}
+
+/**
  * A question set aside to answer later instead of now - e.g. it's clearly
  * relevant but too deep or long for the current session. Surfaced only
  * when Scott chooses to pull one up, not force-injected into the normal
