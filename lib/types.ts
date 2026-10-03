@@ -31,6 +31,8 @@ export interface LifePeriod {
   /** Rough ordering hint only; dates are expected to be blurry, especially early on. */
   approxStart?: string;
   approxEnd?: string;
+  /** ISO 8601. Set by "New topic": the question engine steers clear of this period until then. */
+  snoozedUntil?: string;
 }
 
 export const SEED_LIFE_PERIODS: LifePeriod[] = [

@@ -167,6 +167,19 @@ export default function SessionScreen() {
     setAnswer("");
     setPhotoFile(null);
     setPhotoResetKey((k) => k + 1);
+    // Set the period aside for a while so the engine doesn't just circle
+    // back to it on the very next question.
+    if (pending?.targetPeriodId) {
+      try {
+        await fetch("/api/session/snooze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ periodId: pending.targetPeriodId }),
+        });
+      } catch {
+        // non-critical - the one-question skip below still applies
+      }
+    }
     await fetchNextQuestion({ excludePeriod: pending?.targetPeriodId, avoidQuestion: pending?.question });
   }
 

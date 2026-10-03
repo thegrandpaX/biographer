@@ -10,7 +10,7 @@ import {
   type LifeSkeleton,
   type ThemeKey,
 } from "./types";
-import { pickNextTarget } from "./coverage";
+import { getSnoozedPeriodIds, pickNextTarget } from "./coverage";
 import { summarizeSkeleton, type SkeletonFacts } from "./skeleton";
 
 const MODEL = "claude-sonnet-5";
@@ -57,7 +57,11 @@ export async function generateQuestion(
   const themeLabel = THEME_LABELS[target.theme];
   const isNewBranch = Boolean(excludePeriodId) && target.periodId !== excludePeriodId;
 
+  // Fragments from a period Scott just set aside stay out of the prompt too -
+  // otherwise they keep pulling the new question back toward that subject.
+  const snoozedIds = getSnoozedPeriodIds(coverageMap);
   const recentContext = recentFragments
+    .filter((f) => !snoozedIds.has(f.periodId))
     .slice(0, 8)
     .map((f) => `- (${f.periodId}/${f.theme}) ${f.cleanedText}`)
     .join("\n");

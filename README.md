@@ -23,6 +23,11 @@ of continuing to target it as thin. Scott can also steer the conversation
 himself ("Something else on my mind →") instead of answering the engine's
 question - once he does, the next question follows up on his topic instead
 of snapping back to gap-filling, until he clicks back to regular questions.
+"New topic" sets the current life period aside for a week (stored on the
+period in `coverage-map.json` as `snoozedUntil`), so a subject he isn't ready
+to talk about doesn't keep resurfacing as the thinnest gap; fragments from
+that period are also kept out of the next prompt's context. If every period
+is snoozed the engine ignores the snooze rather than running dry.
 He can also attach a photo to whatever he's answering (e.g. a picture tied
 to that specific memory), stored in Drive and shown as a thumbnail in the
 review feed. The review feed and chapters viewer are real routes reading

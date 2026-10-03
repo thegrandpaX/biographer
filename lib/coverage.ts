@@ -27,24 +27,44 @@ export function getThinCells(map: CoverageMap): { periodId: string; theme: Theme
     .sort((a, b) => a.fragmentCount - b.fragmentCount);
 }
 
+export const SNOOZE_DAYS = 7;
+
+/** Period ids currently set aside by "New topic" (snooze hasn't expired yet). */
+export function getSnoozedPeriodIds(map: CoverageMap): Set<string> {
+  const now = Date.now();
+  return new Set(
+    map.periods
+      .filter((p) => p.snoozedUntil && new Date(p.snoozedUntil).getTime() > now)
+      .map((p) => p.id)
+  );
+}
+
+/** Sets a period aside so the engine stops targeting it for a while. */
+export function snoozePeriod(map: CoverageMap, periodId: string, days = SNOOZE_DAYS): CoverageMap {
+  const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  return {
+    ...map,
+    periods: map.periods.map((p) => (p.id === periodId ? { ...p, snoozedUntil: until } : p)),
+  };
+}
+
 /**
  * Picks the single thinnest-covered (period, theme) pair to target next.
- * When excludePeriodId is given (the "new topic" override), the thinnest
- * cell from a DIFFERENT life period is preferred, so the engine genuinely
- * branches rather than picking something that happens to be adjacent.
- * Falls back to including the excluded period if nothing else is left
- * (e.g. only one period has any coverage cells so far).
+ * Periods set aside by "New topic" (snoozed) are skipped, so a subject Scott
+ * isn't ready to talk about doesn't keep coming back as the "thinnest" cell.
+ * excludePeriodId is the immediate belt-and-braces version of the same thing.
+ * Falls back to ignoring both if nothing else is left (e.g. only one period
+ * has any coverage cells so far, or everything is snoozed).
  */
 export function pickNextTarget(
   map: CoverageMap,
   excludePeriodId?: string
 ): { periodId: string; theme: ThemeKey } | null {
   const thin = getThinCells(map);
-  if (excludePeriodId) {
-    const otherPeriods = thin.filter((c) => c.periodId !== excludePeriodId);
-    if (otherPeriods.length > 0) return { periodId: otherPeriods[0].periodId, theme: otherPeriods[0].theme };
-  }
-  return thin.length > 0 ? { periodId: thin[0].periodId, theme: thin[0].theme } : null;
+  const snoozed = getSnoozedPeriodIds(map);
+  const preferred = thin.filter((c) => !snoozed.has(c.periodId) && c.periodId !== excludePeriodId);
+  const pick = preferred[0] ?? thin[0];
+  return pick ? { periodId: pick.periodId, theme: pick.theme } : null;
 }
 
 /** Increments the cell for a newly-saved fragment, creating it if needed. */
