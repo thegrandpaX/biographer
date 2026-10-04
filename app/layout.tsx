@@ -25,9 +25,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
 
   return (
+    // suppressHydrationWarning: browser extensions inject attributes onto
+    // <html> before React hydrates, which would otherwise log a mismatch.
     <html
       lang="en"
       className={`${newsreader.variable} ${workSans.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-paper text-ink">
         {session && (
