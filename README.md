@@ -97,6 +97,15 @@ cp .env.local.example .env.local
 - `AUTH_SECRET` - generate with `openssl rand -base64 32`
 - `NEXTAUTH_URL` - `http://localhost:3000` for local dev
 
+### 5a. One-click launch (Windows)
+
+Double-click `Biographer.vbs` (or the "Biographer" desktop shortcut). It starts
+the dev server in the background, opens the app in its own Edge app window
+(no tabs or address bar), and stops the server when you close the window. It
+runs from wherever the project folder lives, so make sure the shortcut points
+at the copy you're actually editing. Sign in with Google once; the window keeps
+its own profile, so the sign-in and mic permission are remembered.
+
 ### 5. Run
 
 ```bash
