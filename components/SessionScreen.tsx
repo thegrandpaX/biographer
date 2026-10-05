@@ -26,6 +26,11 @@ function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
 
+// Generated questions are often several clauses long, so this stays modest
+// and wide-set rather than the poster-size of the mockup's short sample.
+const QUESTION_HEADING =
+  "max-w-[38ch] text-pretty text-[24px] font-medium leading-[1.25] tracking-[-0.005em] [font-stretch:94%] sm:text-[30px]";
+
 const PILL_BUTTON =
   "flex h-11 items-center gap-2 rounded-full border border-border bg-card-raised px-4 text-sm font-medium text-ink-mid hover:bg-card-active disabled:opacity-50";
 
@@ -269,7 +274,7 @@ export default function SessionScreen() {
 
             {directedMode ? (
               <>
-                <h1 className="max-w-[24ch] text-balance text-[32px] font-medium leading-[1.12] tracking-[-0.01em] [font-stretch:92%] sm:text-[46px]">
+                <h1 className={QUESTION_HEADING}>
                   What&apos;s on your mind?
                 </h1>
                 <p className="max-w-prose text-[15px] text-ink-soft">
@@ -278,7 +283,7 @@ export default function SessionScreen() {
               </>
             ) : viewingSaved ? (
               <>
-                <h1 className="max-w-[24ch] text-pretty text-[32px] font-medium leading-[1.12] tracking-[-0.01em] [font-stretch:92%] sm:text-[46px]">
+                <h1 className={QUESTION_HEADING}>
                   {viewingSaved.question}
                 </h1>
                 <p className="flex flex-wrap items-center gap-x-1 text-sm text-ink-soft">
@@ -295,11 +300,11 @@ export default function SessionScreen() {
             ) : (
               <>
                 {loadingQuestion || !pending ? (
-                  <h1 className="text-[28px] font-medium leading-[1.12] text-ink-faint [font-stretch:92%]">
+                  <h1 className="text-[24px] font-medium leading-[1.25] text-ink-faint [font-stretch:94%] sm:text-[30px]">
                     Thinking of a question&hellip;
                   </h1>
                 ) : (
-                  <h1 className="max-w-[24ch] text-pretty text-[32px] font-medium leading-[1.12] tracking-[-0.01em] [font-stretch:92%] sm:text-[46px]">
+                  <h1 className={QUESTION_HEADING}>
                     {pending.question}
                   </h1>
                 )}
