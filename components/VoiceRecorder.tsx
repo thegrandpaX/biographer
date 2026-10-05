@@ -125,38 +125,49 @@ export default function VoiceRecorder({ onTranscribed, disabled }: VoiceRecorder
   }
 
   return (
-    <div className="relative">
-      {(interimText || error) && (
-        <div className="absolute bottom-full left-0 mb-1.5 w-max max-w-[240px]">
-          {interimText && <p className="text-xs italic text-ink-faint">{interimText}</p>}
-          {error && <p className="text-xs text-record">{error}</p>}
-        </div>
-      )}
+    <div className="flex items-center gap-[18px]">
       <button
         type="button"
         disabled={disabled}
         onClick={recording ? stopRecording : startRecording}
-        aria-label={recording ? "Stop recording" : "Record answer"}
-        title={recording ? "Stop recording" : "Record answer"}
-        className={`flex h-[38px] w-[38px] items-center justify-center rounded-full transition disabled:opacity-50 ${
-          recording ? "bg-accent-soft" : "hover:bg-border-soft"
+        aria-label={recording ? "Stop recording" : "Start recording"}
+        title={recording ? "Stop recording" : "Start recording"}
+        className={`flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full transition disabled:opacity-50 ${
+          recording
+            ? "bg-record text-paper shadow-[0_0_0_8px_rgba(229,83,61,0.16)]"
+            : "bg-accent text-on-accent shadow-[0_0_0_8px_var(--accent-glow-soft)]"
         }`}
       >
-        <svg
-          width="19"
-          height="19"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke={recording ? "var(--record)" : "var(--accent)"}
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-          <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
-          <line x1="12" y1="18" x2="12" y2="22" />
-        </svg>
+        {recording ? (
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <rect x="6" y="6" width="12" height="12" rx="2" />
+          </svg>
+        ) : (
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="9" y="2" width="6" height="12" rx="3" />
+            <path d="M5 11a7 7 0 0 0 14 0" />
+            <path d="M12 18v4" />
+          </svg>
+        )}
       </button>
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="text-lg font-semibold">{recording ? "Listening… tap to stop" : "Tap to talk"}</span>
+        <span className="text-sm text-ink-soft">
+          Your words appear below as you speak. Edit anything before saving.
+        </span>
+        {interimText && <span className="text-sm italic text-ink-faint">{interimText}</span>}
+        {error && <span className="text-sm text-record">{error}</span>}
+      </div>
     </div>
   );
 }

@@ -13,18 +13,19 @@ export default function HeaderNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-7 items-center">
+    <nav aria-label="Main" className="flex gap-1">
       {LINKS.map((link) => {
         const active = pathname === link.href;
         return (
           <Link
             key={link.href}
             href={link.href}
-            className={
+            aria-current={active ? "page" : undefined}
+            className={`flex min-h-11 items-center border-b-2 px-3.5 text-[15px] ${
               active
-                ? "text-sm font-semibold text-ink border-b-2 border-accent pb-0.5"
-                : "text-sm font-medium text-ink-soft"
-            }
+                ? "border-accent font-semibold text-ink"
+                : "border-transparent font-medium text-ink-soft hover:text-ink"
+            }`}
           >
             {link.label}
           </Link>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Biographer — Chapters</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=JetBrains+Mono:wght@400;500&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#141516}
+a{color:#ece8e1}a:hover{color:#ffffff}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #141516; color: #ece8e1; font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px; padding: 18px 40px; border-bottom: 1px solid #2c2f32">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 40px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span style="width: 10px; height: 10px; border-radius: 50%; background: {{accent}}; box-shadow: 0 0 0 4px rgba(242,165,65,0.18)"></span>
+        <span style="font-weight: 700; font-stretch: 125%; letter-spacing: 0.08em; font-size: 15px">BIOGRAPHER</span>
+      </div>
+      <nav aria-label="Main" style="display: flex; gap: 4px">
+        <a href="Main.dc.html" style="text-decoration: none; font-size: 15px; font-weight: 500; padding: 12px 14px; color: #a8a39b; border-bottom: 2px solid transparent">Interview</a>
+        <a href="#" style="text-decoration: none; font-size: 15px; font-weight: 500; padding: 12px 14px; color: #a8a39b; border-bottom: 2px solid transparent">Review</a>
+        <a href="Chapters.dc.html" aria-current="page" style="text-decoration: none; font-size: 15px; font-weight: 600; padding: 12px 14px; border-bottom: 2px solid {{accent}}">Chapters</a>
+      </nav>
+    </div>
+    <button type="button" style="height: 44px; padding: 0 4px; border: none; background: transparent; color: #8a857e; font-size: 14px">Sign out</button>
+  </header>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; box-sizing: border-box; padding: 56px 40px 80px; display: flex; flex-wrap: wrap; gap: 64px; align-items: flex-start">
+
+    <aside aria-label="Contents" style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 32px">
+      <div style="display: flex; flex-direction: column; gap: 14px; padding: 20px; border: 1px solid #2c2f32; border-radius: 16px; background: #1a1c1e">
+        <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; color: {{accent}}">7 NEW FRAGMENTS WAITING</span>
+        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #a8a39b">Spread across 2 periods. Consolidation works them into the existing chapters without rewriting what's already there.</p>
+        <button type="button" style="height: 48px; border-radius: 999px; border: none; background: {{accent}}; color: #141516; font-size: 15px; font-weight: 700">Run consolidation</button>
+      </div>
+
+      <nav aria-label="Chapters" style="display: flex; flex-direction: column">
+        <h2 style="margin: 0 0 8px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; color: #a8a39b">CONTENTS</h2>
+        <sc-for list="{{toc}}" as="c" hint-placeholder-count="5">
+          <a href="#" style="display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 4px 8px; padding: 14px 12px; margin: 0 -12px; border-radius: 12px; text-decoration: none; background: {{c.bg}}; border-top: 1px solid {{c.line}}">
+            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; padding-top: 2px; color: {{c.numColor}}">{{c.num}}</span>
+            <span style="font-size: 15px; font-weight: 600; line-height: 1.35; color: #ece8e1">{{c.label}}</span>
+            <span></span>
+            <span style="display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 13px; color: #8a857e">
+              <span>{{c.meta}}</span>
+              <sc-if value="{{c.hasNew}}" hint-placeholder-val="{{ false }}"><span style="color: {{accent}}; font-weight: 600">{{c.fresh}}</span></sc-if>
+            </span>
+          </a>
+        </sc-for>
+      </nav>
+    </aside>
+
+    <article style="flex: 999 1 560px; min-width: 0; max-width: 720px; display: flex; flex-direction: column; gap: 36px">
+      <header style="display: flex; flex-direction: column; gap: 18px; padding-bottom: 32px; border-bottom: 1px solid #2c2f32">
+        <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; color: {{accent}}">CHAPTER 04 · POST-DIVORCE REBUILDING PERIOD</span>
+        <h1 style="margin: 0; font-size: 64px; line-height: 1.02; font-weight: 600; font-stretch: 88%; letter-spacing: -0.02em; text-wrap: balance">[Chapter title]</h1>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 14px; color: #a8a39b">
+          <span>Woven from 18 fragments</span>
+          <span>Updated Sep 28</span>
+          <a href="#" style="color: {{accent}}; font-weight: 600; text-underline-offset: 3px">4 new fragments not yet woven in</a>
+        </div>
+      </header>
+
+      <div style="display: flex; flex-direction: column; gap: 26px; font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; line-height: 1.7; color: #ddd8cf; max-width: 64ch">
+        <p style="margin: 0">[Opening: where this period begins — the move, the place, who was still around, and what the days were built around.]</p>
+        <p style="margin: 0">[The middle stretch of the chapter, drawn from fragments about routines and work. Each paragraph is the biographer's prose, not your raw answers, so it reads like a book rather than a transcript.]</p>
+        <p style="margin: 0">[A turning point from this period, with the sensory detail you gave it — what the room looked like, what was said.]</p>
+        <p style="margin: 0">[How you see it now versus how you saw it then.]</p>
+      </div>
+
+      <footer style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; padding-top: 32px; border-top: 1px solid #2c2f32">
+        <a href="#" style="display: flex; flex-direction: column; gap: 4px; min-height: 44px; text-decoration: none">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; color: #8a857e">← 03</span>
+          <span style="font-size: 16px; font-weight: 600">Marriage at 21 through the divorce</span>
+        </a>
+        <a href="#" style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; min-height: 44px; text-decoration: none; text-align: right">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; color: #8a857e">05 →</span>
+          <span style="font-size: 16px; font-weight: 600">Roughly the last 10 years</span>
+        </a>
+      </footer>
+    </article>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#6fb3a8&quot;,&quot;options&quot;:[&quot;#f2a541&quot;,&quot;#e5533d&quot;,&quot;#6fb3a8&quot;,&quot;#c9b8ff&quot;]},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1360}}">
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#f2a541';
+    const rows = [
+      { num: '01', label: 'Childhood through twenties', meta: '22 fragments', fresh: '' },
+      { num: '02', label: 'Living in Pullman', meta: '9 fragments', fresh: '' },
+      { num: '03', label: 'Marriage at 21 through the divorce', meta: '15 fragments', fresh: '+3 new' },
+      { num: '04', label: 'Post-divorce rebuilding period', meta: '18 fragments', fresh: '+4 new', active: true },
+      { num: '05', label: 'Roughly the last 10 years', meta: 'No chapter yet', fresh: '' }
+    ];
+    return {
+      accent,
+      toc: rows.map((r) => ({
+        ...r,
+        hasNew: !!r.fresh,
+        bg: r.active ? '#1f2224' : 'transparent',
+        line: r.active ? 'transparent' : '#2c2f32',
+        numColor: r.active ? accent : '#8a857e'
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

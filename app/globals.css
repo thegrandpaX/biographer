@@ -1,53 +1,71 @@
 @import "tailwindcss";
 
+/* Studio palette - dark only for now. The accent2 / accent-soft / border-soft
+   names are kept so Review and Intake (not redesigned) keep rendering. */
 :root {
-  --paper: #fbf7f1;
-  --card: #fffdfa;
-  --ink: #2b2420;
-  --ink-soft: #6b6058;
-  --ink-faint: #948a80;
-  --border: #e4dacb;
-  --border-soft: #eee6d9;
-  --accent: #b5502e;
-  --accent-soft: #f3e3d6;
-  --accent2: #3f7a63;
-  --accent2-soft: #e1ede6;
-  --record: #c23b2b;
+  --paper: #141516;
+  --card: #1a1c1e;
+  --card-raised: #1c1e20;
+  --card-active: #1f2224;
+  --border: #2c2f32;
+  --border-soft: #1f2224;
+  --border-strong: #3a3e42;
+  --ink: #ece8e1;
+  --ink-prose: #ddd8cf;
+  --ink-mid: #d6d1c9;
+  --ink-soft: #a8a39b;
+  --ink-faint: #8a857e;
+  --accent: #6fb3a8;
+  --on-accent: #141516;
+  --accent-glow: rgba(111, 179, 168, 0.18);
+  --accent-glow-soft: rgba(111, 179, 168, 0.12);
+  --accent-soft: rgba(111, 179, 168, 0.14);
+  --accent2: #6fb3a8;
+  --accent2-soft: rgba(111, 179, 168, 0.14);
+  --record: #e5533d;
 }
 
 @theme inline {
   --color-paper: var(--paper);
   --color-card: var(--card);
+  --color-card-raised: var(--card-raised);
+  --color-card-active: var(--card-active);
   --color-ink: var(--ink);
+  --color-ink-prose: var(--ink-prose);
+  --color-ink-mid: var(--ink-mid);
   --color-ink-soft: var(--ink-soft);
   --color-ink-faint: var(--ink-faint);
   --color-border: var(--border);
   --color-border-soft: var(--border-soft);
+  --color-border-strong: var(--border-strong);
   --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
   --color-accent-soft: var(--accent-soft);
   --color-accent2: var(--accent2);
   --color-accent2-soft: var(--accent2-soft);
   --color-record: var(--record);
-  --font-sans: var(--font-work-sans);
-  --font-serif: var(--font-newsreader);
+  --font-sans: var(--font-archivo);
+  --font-serif: var(--font-source-serif);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #1c1714;
-    --card: #231c18;
-    --ink: #ede6de;
-    --ink-soft: #b9afa4;
-    --ink-faint: #8c8177;
-    --border: #3a2f28;
-    --border-soft: #2e2620;
-    --accent-soft: #3a2318;
-    --accent2-soft: #1e2e27;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-work-sans), -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
+}
+
+textarea::placeholder {
+  color: var(--ink-faint);
+}
+
+/* Small uppercase meta label: mono, 0.08em tracking. */
+.meta-label {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }

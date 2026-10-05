@@ -36,7 +36,7 @@ function SignInScreen() {
       >
         <button
           type="submit"
-          className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-[#FFF9F4] hover:opacity-90"
+          className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-on-accent hover:opacity-90"
         >
           Sign in with Google
         </button>
